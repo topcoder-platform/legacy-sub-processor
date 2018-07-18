@@ -56,13 +56,23 @@
     bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic
     ```
 
-## Start the Mock Submission API
+## Run Unit Tests
+
+- `cd tc-submission-legacy-processor`
+- `npm i`
+- `npm test`
+
+The detailed test coverage report (html) is generated to `./coverage` directory
+
+## Manual Verification
+
+### Start the Mock Submission API
 
 - `cd tc-submission-legacy-processor`
 - `npm i`
 - `npm run mock-submission-api`
 
-## Start the Application in Test Environment
+### Start the Application in Test Environment
 
 - `cd tc-submission-legacy-processor`
 - For Linux: 
@@ -76,7 +86,7 @@
     npm start
     ```
 
-## Send Test Events and Verify
+### Send Test Events and Verify
 
 - `cd tc-submission-legacy-processor`
 - For Linux: `export NODE_ENV=test`

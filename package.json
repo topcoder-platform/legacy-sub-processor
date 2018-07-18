@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node index",
-    "lint": "standard",
-    "lint:fix": "standard --fix",
+    "lint": "standard --env mocha",
+    "lint:fix": "standard --env mocha --fix",
     "mock-submission-api": "node test/mock-submission-api",
-    "produce-test-event": "node test/produce-test-event"
+    "produce-test-event": "node test/produce-test-event",
+    "test": "nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -19,6 +20,14 @@
     "winston": "^2.4.2"
   },
   "devDependencies": {
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
     "standard": "^11.0.1"
+  },
+  "nyc": {
+    "exclude": [
+      "src/common/logger.js",
+      "test/*.js"
+    ]
   }
 }

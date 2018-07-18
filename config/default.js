@@ -18,10 +18,10 @@ module.exports = {
   KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT || './test/kafka-ssl/client.key',
 
   // The topic from which the app consumes events
-  KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'new-submission-topic',
+  KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission',
 
   // The event originator
-  KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR || 'new-submission-originator',
+  KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR || 'challenge',
 
   // The Submission API URL
   SUBMISSION_API_URL: process.env.SUBMISSION_API_URL || 'http://localhost:3000'

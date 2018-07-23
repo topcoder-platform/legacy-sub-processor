@@ -15,7 +15,7 @@ module.exports = {
   KAFKA_CLIENT_CERT: process.env.KAFKA_CLIENT_CERT || './test/kafka-ssl/client.crt',
 
   // The client cert key, can be (1) the path to the cert key file, or (2) the cert key content
-  KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT || './test/kafka-ssl/client.key',
+  KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY || './test/kafka-ssl/client.key',
 
   // The topic from which the app consumes events
   KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission',

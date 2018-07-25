@@ -19,7 +19,7 @@ save_cache_settings: &save_cache_settings
 
 jobs:
   # Build & Deploy against development backend
-  "build_dev":
+  "build-dev":
     <<: *defaults
     steps:
       - checkout
@@ -32,7 +32,7 @@ jobs:
       #    command: ./deploy.sh DEV $CIRCLE_SHA1
 
   # Build & Deploy against production backend
-  "build_prod":
+  "build-prod":
     <<: *defaults
     steps:
       - checkout

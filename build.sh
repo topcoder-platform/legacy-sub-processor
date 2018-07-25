@@ -16,7 +16,7 @@ then
   # If "node_modules" directory already exists, we should compare
   # "package-lock.json" from the code and from the container to decide,
   # whether we need to re-cache, and thus to copy "node_modules" from
-  # the Docker container.
+  # the Docker container. 
   mv package-lock.json old-package-lock.json
   docker cp app:/opt/app/package-lock.json package-lock.json
   set +eo pipefail

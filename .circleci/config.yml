@@ -1,17 +1,13 @@
 version: 2
-build_basesteps: &build_basesteps
+defaults: &defaults
     docker:
-      - image: docker:17.11.0-ce-git
-    steps:
-      # Initialization.
-      - checkout
-      - setup_remote_docker
-      - run:
+      - image: docker:17.11.0-ce-git        
+install_dependency: &install_dependency
           name: Installation of build and deployment dependencies.
           command: |
             apk add --no-cache bash
             apk add --no-cache jq py-pip sudo
-            sudo pip install awscli --upgrade          
+            sudo pip install awscli --upgrade 
 
 restore_cache_settings_for_build: &restore_cache_settings_for_build
   key: docker-node-modules-lsp-{{ checksum "package-lock.json" }}
@@ -23,18 +19,31 @@ save_cache_settings: &save_cache_settings
 
 jobs:
   # Build & Deploy against development backend
-  "build-dev":
-    <<: *build_basesteps
+  "build_dev":
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *install_dependency
       - restore_cache: *restore_cache_settings_for_build
       - run: ./build.sh DEV
       - save_cache: *save_cache_settings          
+      #- deploy:
+      #    command: ./deploy.sh DEV $CIRCLE_SHA1
 
   # Build & Deploy against production backend
-  "build-prod":
-    <<: *build_basesteps
+  "build_prod":
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: *install_dependency
+      - restore_cache: *restore_cache_settings_for_build
       - restore_cache: *restore_cache_settings_for_build
       - run: ./build.sh PROD
       - save_cache: *save_cache_settings          
+      #- deploy:
+      #    command: ./deploy.sh PROD $CIRCLE_SHA1
 
 workflows:
   version: 2

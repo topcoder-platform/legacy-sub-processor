@@ -128,7 +128,7 @@ services:
     build:
       context: ./docker/legacy-submission-processor
       args:
-        servername: informix.topcoder-dev.com
+        servername: ${DB_SERVER_NAME}
     image: lsp-app-staging:latest
     container_name: lsp-app-staging
     ports:
@@ -143,6 +143,8 @@ services:
       - KAFKA_NEW_SUBMISSION_TOPIC=${KAFKA_NEW_SUBMISSION_TOPIC}
       - KAFKA_NEW_SUBMISSION_ORIGINATOR=${KAFKA_NEW_SUBMISSION_ORIGINATOR}
       - SUBMISSION_API_URL=${SUBMISSION_API_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
     volumes:
       - ".:/app"
     command: run start:docker
@@ -151,7 +153,7 @@ services:
     build:
       context: ./docker/legacy-submission-processor
       args:
-        servername: informix.topcoder.com
+        servername: ${DB_SERVER_NAME}
     image: lsp-app-prod:latest
     container_name: lsp-app-prod
     ports:
@@ -166,6 +168,8 @@ services:
       - KAFKA_NEW_SUBMISSION_TOPIC=${KAFKA_NEW_SUBMISSION_TOPIC}
       - KAFKA_NEW_SUBMISSION_ORIGINATOR=${KAFKA_NEW_SUBMISSION_ORIGINATOR}
       - SUBMISSION_API_URL=${SUBMISSION_API_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
     volumes:
       - ".:/app"
     command: run start:docker

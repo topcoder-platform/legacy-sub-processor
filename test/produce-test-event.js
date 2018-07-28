@@ -22,7 +22,7 @@ const sampleMessage = {
       challengeId: 1234,
       memberId: 4321,
       url: 'http://content.topcoder.com/some/path',
-      type: 'ContestSubmission'
+      type: 'Contest Submission'
     }
   }
 }
@@ -98,7 +98,17 @@ const producer = new Kafka.Producer({
 
 // Get event id from argument
 // npm run produce-test-event 0
-const eventId = Number(process.argv[2])
+let eventId
+if (process.argv.length > 3) {
+  // custom event
+  sampleMessage.payload.submission.challengeId = Number(process.argv[2])
+  sampleMessage.payload.submission.memberId = Number(process.argv[3])
+  sampleMessage.payload.submission.submissionPhaseId = Number(process.argv[4])
+  eventId = 9
+  events[eventId] = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
+} else {
+  eventId = Number(process.argv[2])
+}
 
 producer.init()
   .then(() => producer.send(events[eventId]))

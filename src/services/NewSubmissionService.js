@@ -22,6 +22,7 @@ const eventSchema = Joi.object().keys({
       id: Joi.id(),
       challengeId: Joi.id(),
       memberId: Joi.id(),
+      submissionPhaseId: Joi.id(),
       url: Joi.string().uri().required(),
       type: Joi.string().required()
     }).required()
@@ -30,14 +31,15 @@ const eventSchema = Joi.object().keys({
 
 // Axios instance to make calls to the Submission API
 const axios = Axios.create({
-  baseURL: config.SUBMISSION_API_URL
+  baseURL: config.SUBMISSION_API_URL,
+  timeout: config.SUBMISSION_TIMEOUT
 })
 
 /**
  * Handle new submission message.
  * @param {String} value the message value (JSON string)
  */
-async function handle (value) {
+async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   if (!value) {
     logger.debug('Skipped null or empty event')
     return
@@ -76,7 +78,14 @@ async function handle (value) {
   }
 
   // Generate a legacy submission id
-  const legacySubmissionId = LegacySubmissionIdService.generate()
+  const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.submission.challengeId,
+    event.payload.submission.memberId,
+    event.payload.submission.submissionPhaseId,
+    event.payload.submission.type,
+    idUploadGen,
+    idSubmissionGen
+  )
+  logger.debug('Submission was added with id: ' + legacySubmissionId)
 
   // Update to the Submission API
   await axios.put(`/submissions/${event.payload.submission.id}`, {

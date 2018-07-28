@@ -7,6 +7,8 @@ const config = require('config')
 const util = require('util')
 const logger = require('./src/common/logger')
 const NewSubmissionService = require('./src/services/NewSubmissionService')
+const IDGenerator = require('./src/services/IdGenerator')
+const healthcheck = require('topcoder-healthcheck-dropin')
 
 /**
  * Handle the messsages from Kafka.
@@ -23,7 +25,7 @@ function handleMessages (messages, topic, partition) {
     logger.debug(`Received ${messageInfo}`)
 
     // Handle the event
-    return NewSubmissionService.handle(messageValue)
+    return NewSubmissionService.handle(messageValue, dbOpts, idUploadGen, idSubmissionGen)
       .then(() => {
         logger.debug(`Completed handling ${messageInfo}`)
 
@@ -52,11 +54,37 @@ const consumer = new Kafka.GroupConsumer({
   }
 })
 
+// db informix option
+const dbOpts = {
+  database: config.DB_NAME,
+  username: config.DB_USERNAME,
+  password: config.DB_PASSWORD
+}
+
+const idUploadGen = new IDGenerator(dbOpts, config.ID_SEQ_UPLOAD)
+const idSubmissionGen = new IDGenerator(dbOpts, config.ID_SEQ_SUBMISSION)
+
+// check if there is kafka connection alive
+function check () {
+  if (!consumer.client.initialBrokers && !consumer.client.initialBrokers.length) {
+    return false
+  }
+  let connected = true
+  consumer.client.initialBrokers.forEach(conn => {
+    logger.debug(`url ${conn.server()} - connected=${conn.connected}`)
+    connected = conn.connected & connected
+  })
+  return connected
+}
+
 // Start to listen from the Kafka topic
 consumer.init({
   subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC],
   handler: handleMessages
 })
+  .then(() => {
+    healthcheck.init([check])
+  })
   .catch(err => {
     logger.error(util.inspect(err))
     process.exit(1)

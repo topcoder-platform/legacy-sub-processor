@@ -2,8 +2,8 @@
 ---------------------
 
 ## Requirements
-- NodeJS 8.x
-- Kafka 1.1.0 with SSL enabled
+- Docker Engine >= 17.x
+- Docker-compose >= 1.17
 
 ## Configuration
 
@@ -18,13 +18,57 @@ You can update the configuration file or set values to the corresponding environ
 - `KAFKA_NEW_SUBMISSION_TOPIC` The topic from which the app consumes events
 - `KAFKA_NEW_SUBMISSION_ORIGINATOR` The event originator
 - `SUBMISSION_API_URL` The Submission API URL
+- `SUBMISSION_TIMEOUT` The Submission API timeout
+- `DB_NAME` legacy database name 'dbname@db_server_name'
+- `DB_USERNAME` database username
+- `DB_PASSWORD` database password
+- `ID_SEQ_UPLOAD` upload database sequence
+- `ID_SEQ_SUBMISSION` submission database sequence
+
+> NOTE: ALL COMMANDS BELOW EXECUTE UNDER ```<legacy-sub-procecssor>``` directory
+
+## Build Application Docker Image
+We only need to do this once
+```bash
+docker-compose build lsp-app
+```
+
+## Run Kafka and Create Topic (if running kafka locally)
+
+Build Kafka image:
+```bash
+docker-compose build kafka
+```
+
+Run Kafka server:
+```bash
+docker-compose up -d kafka
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic"
+```
+
+## Install App Requirements
+```bash
+docker-compose up lsp-app-install
+```
 
 ## Deployment
+```bash
+docker-compose up lsp-app
+```
 
-- Make sure that you configure the app correctly as above
-- `cd tc-submission-legacy-processor`
-- `npm i`
-- `npm start`
+## Running Test
+- Make sure you're running a clean database (you can take down tc-informix container and then up it again)
+- Stop `legacy-sub-processor` application if it was running
+- Install test data
+```bash
+docker cp test/sql/test.sql iif_innovator_c:/
+docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
+```
+- Run kafka container (and create topic if you haven't do this before)
+- Run
+```bash
+docker-compose up lsp-app-test
+```
 
 ## Standard Code Style
 

@@ -7,7 +7,7 @@ services:
 
   tc-informix:
     image: "appiriodevops/tc-database-scripts:latest"
-    hostname: informix.cloud.topcoder.com
+    hostname: ${DB_SERVER_NAME}
     container_name: iif_innovator_c
     environment:
       LICENSE: accept
@@ -59,6 +59,7 @@ services:
     build:
       context: ./docker/kafka
     image: kafka-ssl:1.0
+    hostname: ${DB_SERVER_NAME}
     container_name: kafka
     ports:
       - "9093:9093"

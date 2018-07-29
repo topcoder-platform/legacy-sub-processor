@@ -4,8 +4,8 @@
   "description": "Topcoder - Submission Legacy Processor Application",
   "main": "index.js",
   "scripts": {
-    "start:docker": "npm --unsafe-perm install && npm start",
-    "test:docker": "npm --unsafe-perm install && npm test",
+    "start:docker": "npm --unsafe-perm install && port=$PORT node -r dotenv/config index",
+    "test:docker": "npm --unsafe-perm install && npm run test",
     "start": "node index",
     "lint": "standard --env mocha",
     "lint:fix": "standard --env mocha --fix",
@@ -17,6 +17,7 @@
     "async-mutex": "^0.1.3",
     "axios": "^0.18.0",
     "config": "^1.30.0",
+    "dotenv": "^6.0.0",
     "informix": "^0.8.0",
     "joi": "^13.4.0",
     "lodash": "^4.17.10",

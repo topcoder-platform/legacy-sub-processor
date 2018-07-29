@@ -70,6 +70,15 @@ docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_
 docker-compose up lsp-app-test
 ```
 
+## Docker Build
+
+```bash
+heroku login
+heroku create
+heroku container:push web --arg servername=<DATABASE_SERVER>
+heroku container:release web
+```
+
 ## Standard Code Style
 
 - Check code style `npm run lint`

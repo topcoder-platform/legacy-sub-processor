@@ -20,6 +20,7 @@ ADD scripts/start-kafka.sh /usr/bin/start-kafka.sh
 ADD kafka-ssl /kafka-ssl
 ADD ssl.config /
 RUN cat /ssl.config >> $KAFKA_HOME/config/server.properties
+RUN echo "listeners=PLAINTEXT://:9092,SSL://:9093" >> $KAFKA_HOME/config/server.properties
 ENV PATH $KAFKA_HOME/bin:$PATH
 
 # Supervisor config

@@ -1,6 +1,7 @@
 /**
  * The main entry of the application.
  */
+
 const Promise = require('bluebird')
 const Kafka = require('no-kafka')
 const config = require('config')
@@ -81,8 +82,7 @@ function check () {
 consumer.init({
   subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC],
   handler: handleMessages
-})
-  .then(() => {
+}).then(() => {
     healthcheck.init([check])
   })
   .catch(err => {

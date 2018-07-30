@@ -11,7 +11,7 @@ const NewSubmissionService = require('./src/services/NewSubmissionService')
 const IDGenerator = require('./src/services/IdGenerator')
 const healthcheck = require('topcoder-healthcheck-dropin')
 
-logger.info(`KAFKA URL - ${config.KAFKA_URL}`);
+logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
 
 /**
  * Handle the messsages from Kafka.
@@ -84,7 +84,8 @@ function check () {
 consumer.init({
   subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC],
   handler: handleMessages
-}).then(() => {
+})
+  .then(() => {
     healthcheck.init([check])
   })
   .catch(err => {

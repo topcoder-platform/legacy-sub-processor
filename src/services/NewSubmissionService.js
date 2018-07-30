@@ -18,14 +18,12 @@ const eventSchema = Joi.object().keys({
   timestamp: Joi.date().required(),
   'mime-type': Joi.string().required(),
   payload: Joi.object().keys({
-    submission: Joi.object().keys({
-      id: Joi.id(),
-      challengeId: Joi.id(),
-      memberId: Joi.id(),
-      submissionPhaseId: Joi.id(),
-      url: Joi.string().uri().required(),
-      type: Joi.string().required()
-    }).required()
+    id: Joi.id(),
+    challengeId: Joi.id(),
+    memberId: Joi.id(),
+    submissionPhaseId: Joi.id(),
+    url: Joi.string().uri().required(),
+    type: Joi.string().required()
   }).required()
 })
 
@@ -78,22 +76,22 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   }
 
   // Generate a legacy submission id
-  const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.submission.challengeId,
-    event.payload.submission.memberId,
-    event.payload.submission.submissionPhaseId,
-    event.payload.submission.type,
+  const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.challengeId,
+    event.payload.memberId,
+    event.payload.submissionPhaseId,
+    event.payload.type,
     idUploadGen,
     idSubmissionGen
   )
   logger.debug('Submission was added with id: ' + legacySubmissionId)
 
   // Update to the Submission API
-  await axios.put(`/submissions/${event.payload.submission.id}`, {
-    id: event.payload.submission.id,
+  await axios.put(`/submissions/${event.payload.id}`, {
+    id: event.payload.id,
     legacySubmissionId
   })
 
-  logger.debug(`Updated to the Submission API: id ${event.payload.submission.id}, legacy submission id ${legacySubmissionId}`)
+  logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
 }
 
 module.exports = {

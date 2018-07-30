@@ -24,7 +24,7 @@ const eventSchema = Joi.object().keys({
     submissionPhaseId: Joi.id(),
     url: Joi.string().uri().required(),
     type: Joi.string().required(),
-    isFileSubmission: Joi.boolean().optiona(),
+    isFileSubmission: Joi.boolean().optional(),
     fileType: Joi.string().optional(),
     filename: Joi.string().optional()
   }).required()

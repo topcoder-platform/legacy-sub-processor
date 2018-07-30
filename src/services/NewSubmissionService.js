@@ -18,12 +18,15 @@ const eventSchema = Joi.object().keys({
   timestamp: Joi.date().required(),
   'mime-type': Joi.string().required(),
   payload: Joi.object().keys({
-    id: Joi.id(),
+    submissionId: Joi.id(),
     challengeId: Joi.id(),
     memberId: Joi.id(),
     submissionPhaseId: Joi.id(),
     url: Joi.string().uri().required(),
-    type: Joi.string().required()
+    type: Joi.string().required(),
+    isFileSubmission: Joi.boolean().optiona(),
+    fileType: Joi.string().optional(),
+    filename: Joi.string().optional()
   }).required()
 })
 
@@ -86,12 +89,12 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   logger.debug('Submission was added with id: ' + legacySubmissionId)
 
   // Update to the Submission API
-  await axios.put(`/submissions/${event.payload.id}`, {
+  await axios.put(`/submissions/${event.payload.submissionId}`, {
     id: event.payload.id,
     legacySubmissionId
   })
 
-  logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
+  logger.debug(`Updated to the Submission API: id ${event.payload.submissionId}, legacy submission id ${legacySubmissionId}`)
 }
 
 module.exports = {

@@ -114,7 +114,7 @@ services:
     image: lsp-app:latest
     environment:
       - "NODE_ENV=test"
-      - "port=3300"
+      - "PORT=3300"
     volumes:
       - ".:/app"
     command: run test:docker
@@ -136,7 +136,7 @@ services:
       - "3000:3300"
     environment:
       - "NODE_ENV=staging"
-      - "port=3300"
+      - "PORT=3300"
       - KAFKA_GROUP_ID=${KAFKA_GROUP_ID}
       - KAFKA_URL=${KAFKA_URL}
       - KAFKA_CLIENT_CERT=${KAFKA_CLIENT_CERT}
@@ -161,7 +161,7 @@ services:
       - "3000:3300"
     environment:
       - "NODE_ENV=production"
-      - "port=3300"
+      - "PORT=3300"
       - KAFKA_GROUP_ID=${KAFKA_GROUP_ID}
       - KAFKA_URL=${KAFKA_URL}
       - KAFKA_CLIENT_CERT=${KAFKA_CLIENT_CERT}

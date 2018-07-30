@@ -22,14 +22,12 @@ const sampleMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
-    submission: {
-      id: 111,
-      challengeId: 30005521,
-      memberId: 124916,
-      url: 'http://content.topcoder.com/some/path',
-      type: 'Contest Submission',
-      submissionPhaseId: 95245
-    }
+    id: 111,
+    challengeId: 30005521,
+    memberId: 124916,
+    url: 'http://content.topcoder.com/some/path',
+    type: 'Contest Submission',
+    submissionPhaseId: 95245
   }
 }
 
@@ -156,14 +154,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           timestamp: 'invalid date',
           payload: {
-            submission: {
-              id: 0,
-              challengeId: 'a',
-              memberId: 'b',
-              url: 'invalid url',
-              type: null,
-              submissionPhaseId: 333
-            }
+            id: 0,
+            challengeId: 'a',
+            memberId: 'b',
+            url: 'invalid url',
+            type: null,
+            submissionPhaseId: 333
           }
         }))
       }
@@ -234,9 +230,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              id: null
-            }
+            id: null
           }
         }))
       }
@@ -261,9 +255,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              id: 0
-            }
+            id: 0
           }
         }))
       }
@@ -288,9 +280,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              challengeId: null
-            }
+            challengeId: null
           }
         }))
       }
@@ -315,9 +305,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              challengeId: 0
-            }
+            challengeId: 0
           }
         }))
       }
@@ -342,9 +330,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              memberId: null
-            }
+            memberId: null
           }
         }))
       }
@@ -369,9 +355,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              memberId: 0
-            }
+            memberId: 0
           }
         }))
       }
@@ -396,9 +380,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              url: null
-            }
+            url: null
           }
         }))
       }
@@ -423,9 +405,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              url: 'invalid'
-            }
+            url: null
           }
         }))
       }
@@ -450,9 +430,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              type: null
-            }
+            type: null
           }
         }))
       }
@@ -477,9 +455,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              type: ''
-            }
+            type: ''
           }
         }))
       }
@@ -504,9 +480,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              submissionPhaseId: null
-            }
+            submissionPhaseId: null
           }
         }))
       }
@@ -531,9 +505,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              submissionPhaseId: 0
-            }
+            submissionPhaseId: 0
           }
         }))
       }

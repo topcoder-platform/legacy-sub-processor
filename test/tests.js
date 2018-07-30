@@ -405,7 +405,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            url: null
+            url: 'invalid'
           }
         }))
       }

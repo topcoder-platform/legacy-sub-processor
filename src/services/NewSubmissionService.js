@@ -18,7 +18,7 @@ const eventSchema = Joi.object().keys({
   timestamp: Joi.date().required(),
   'mime-type': Joi.string().required(),
   payload: Joi.object().keys({
-    submissionId: Joi.id(),
+    submissionId: Joi.alternatives().try(Joi.id(), Joi.string().uuid()),
     challengeId: Joi.id(),
     memberId: Joi.id(),
     submissionPhaseId: Joi.id(),

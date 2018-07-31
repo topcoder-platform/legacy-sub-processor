@@ -27,7 +27,7 @@ const eventSchema = Joi.object().keys({
     isFileSubmission: Joi.boolean().optional(),
     fileType: Joi.string().optional(),
     filename: Joi.string().optional()
-  }).required()
+  }).required().unknown(true)
 })
 
 // Axios instance to make calls to the Submission API
@@ -61,7 +61,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   }
 
   // Validate event
-  const validationResult = Joi.validate(event, eventSchema, { abortEarly: false })
+  const validationResult = Joi.validate(event, eventSchema, { abortEarly: false, stripUnknown: true })
   if (validationResult.error) {
     const validationErrorMessage = _.map(validationResult.error.details, 'message').join(', ')
     logger.debug(`Skipped invalid event, reasons: ${validationErrorMessage}`)

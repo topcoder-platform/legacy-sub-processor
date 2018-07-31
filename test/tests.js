@@ -546,6 +546,31 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     })
   })
 
+  it('should handle message successfully - unknown keys', (done) => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          payload: {
+            extraKey: 'extraKey'
+          }
+        }))
+      }
+    }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 11)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.ok(logMessages[6].startsWith('Submission was added with id:'))
+          assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
+
+          done()
+        }, 2000)
+      })
+  })
+
   it('should handle message successfully', (done) => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
     producer.send(m)

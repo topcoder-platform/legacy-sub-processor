@@ -1,5 +1,6 @@
 
 const SUBMISSION_TYPE = {
+  'challengesubmission': { id: 1, roleId: 1 },
   'Contest Submission': { id: 1, roleId: 1 },
   'Specification Submission': { id: 2, roleId: 17 },
   'Checkpoint Submission': { id: 3, roleId: 1 },

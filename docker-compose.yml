@@ -59,7 +59,6 @@ services:
     build:
       context: ./docker/kafka
     image: kafka-ssl:1.0
-    hostname: ${DB_SERVER_NAME}
     container_name: kafka
     ports:
       - "9093:9093"

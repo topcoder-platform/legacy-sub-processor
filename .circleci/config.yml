@@ -22,7 +22,6 @@ jobs:
   "build-dev":
     <<: *defaults
     steps:
-      - run: git clone --branch master https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
       - checkout
       - setup_remote_docker
       - run: *install_dependency
@@ -31,6 +30,7 @@ jobs:
       - save_cache: *save_cache_settings          
       - deploy:
           command: |
+            git clone --branch master https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
             cp ./../buildscript/master_deply_v4.2.sh .
             #./master_deply_v4.2.sh -d ECS -e DEV -t $CIRCLE_SHA1 -s legacyapp
 
@@ -38,7 +38,6 @@ jobs:
   "build-prod":
     <<: *defaults
     steps:
-      - run: git clone --branch master https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript 
       - checkout
       - setup_remote_docker
       - run: *install_dependency
@@ -48,6 +47,7 @@ jobs:
       - save_cache: *save_cache_settings          
       - deploy:
           command: |
+            git clone --branch master https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
             cp ./../buildscript/master_deply_v4.2.sh .
             #./master_deply_v4.2.sh -d ECS -e PROD -t $CIRCLE_SHA1 -s legacyapp
 

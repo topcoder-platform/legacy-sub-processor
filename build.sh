@@ -7,14 +7,35 @@ AWS_REGION=$(eval "echo \$${ENV}_AWS_REGION")
 # Builds Docker image of the app.
 TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-sub-processor:$CIRCLE_SHA1
 
-
+echo "================================"
+echo "Creating lsp-asp images"
+echo "================================"
 docker-compose -f ecs-docker-compose.yml build lsp-app
 docker tag lsp-app:latest $TAG
+echo "================================"
+echo "lsp-asp images has created"
+echo "Creating kafka and tc-informix"
+echo "================================"
 docker-compose -f ecs-docker-compose.yml up -d kafka tc-informix
+echo "================================"
+echo "kafka and tc-informix has created"
+echo "Executing kafka topics"
+echo "================================"
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic"
+echo "================================"
+echo "kafka topics has created"
+echo "Copying sql file and setting env"
+echo "================================"
 docker cp test/sql/test.sql iif_innovator_c:/
 docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
+echo "================================"
+echo "Copied sql file and env set"
+echo "initiating test"
+echo "================================"
 docker-compose -f ecs-docker-compose.yml up lsp-app-test
+echo "================================"
+echo "test completed"
+echo "================================"
 #docker build -f ECSDockerfile -t $TAG .
 
 # Copies "node_modules" from the created image, if necessary for caching.

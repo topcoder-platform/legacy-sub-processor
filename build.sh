@@ -15,7 +15,7 @@ docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:21
 docker cp test/sql/test.sql iif_innovator_c:/
 docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
 docker-compose -f ecs-docker-compose.yml up lsp-app-test
-docker build -f ECSDockerfile -t $TAG .
+#docker build -f ECSDockerfile -t $TAG .
 
 # Copies "node_modules" from the created image, if necessary for caching.
 docker create --name app $TAG

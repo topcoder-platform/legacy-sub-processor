@@ -32,9 +32,14 @@ echo "kafka topics has created"
 echo "Copying sql file and setting env"
 echo "================================"
 docker cp test/sql/test.sql iif_innovator_c:/
+sleep 15
+echo "================================"
+echo "copied sql file "
+echo "setting env"
+echo "================================"
 docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
 echo "================================"
-echo "Copied sql file and env set"
+echo "env set"
 echo "initiating test"
 echo "================================"
 docker-compose -f ecs-docker-compose.yml up lsp-app-test

@@ -16,9 +16,14 @@ echo "================================"
 echo "lsp-asp images has created"
 echo "Creating kafka and tc-informix"
 echo "================================"
-docker-compose -f ecs-docker-compose.yml up -d kafka tc-informix
+docker-compose -f ecs-docker-compose.yml up -d kafka 
 echo "================================"
-echo "kafka and tc-informix has created"
+echo "kafka has created"
+echo "Creating kafka and tc-informix"
+echo "================================"
+docker-compose -f ecs-docker-compose.yml up -d tc-informix
+echo "================================"
+echo "tc-informix has created"
 echo "Executing kafka topics"
 echo "================================"
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic"

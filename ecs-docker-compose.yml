@@ -55,8 +55,6 @@ services:
     environment:
       - "NODE_ENV=test"
       - "PORT=3300"
-    volumes:
-      - ".:/app"
     command: run test:docker
     links:
       - "kafka:kafka-host"

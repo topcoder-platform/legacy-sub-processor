@@ -1298,3 +1298,6 @@ VALUES(26, 30005522, 1, 900, 16, 1, '132456', current, '132456', current);
 INSERT INTO tcs_catalog:informix.prize
 (prize_id, project_id, place, prize_amount, prize_type_id, number_of_submissions, create_user, create_date, modify_user, modify_date)
 VALUES(27, 30005522, 2, 450, 16, 1, '132456', current, '132456', current);
+
+UPDATE id_sequences SET next_block_start = 60000 WHERE name = 'upload_id_seq';
+UPDATE id_sequences SET next_block_start = 93000 WHERE name = 'submission_id_seq';

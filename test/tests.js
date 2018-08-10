@@ -531,9 +531,6 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
         .then((results) => {
           setTimeout(() => {
             mockSubmissionApi.listen(3000)
-            if (logMessages.length !== 9) {
-              console.log(JSON.stringify(logMessages))
-            }
             const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
             assert.equal(logMessages.length, 9)
             assert.equal(logMessages[0], `Received ${messageInfo}`)

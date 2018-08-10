@@ -6,11 +6,11 @@ USER root
 RUN mkdir /app
 WORKDIR /home/informix
 
-RUN apt-get update && sudo apt-get install -y \
+RUN apt-get -qq update && apt-get -qq install -y \
     wget gcc g++ make xz-utils python2.7
 
-RUN wget -O node8.tar.xz https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-x64.tar.xz \
-    && tar xvfJ node8.tar.xz && rm -rf node8.tar.xz
+RUN wget -q -O node8.tar.xz https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-x64.tar.xz \
+    && tar xfJ node8.tar.xz && rm -rf node8.tar.xz
 
 ENV SERVERNAME=$servername
 

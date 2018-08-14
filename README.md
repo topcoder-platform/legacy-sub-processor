@@ -1,5 +1,5 @@
 # Topcoder - Submission Legacy Processor Application
----------------------
+----------------------
 
 ## Requirements
 - Docker Engine >= 17.x

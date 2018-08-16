@@ -5,6 +5,7 @@ const logger = require('../common/logger')
 const constant = require('../common/constant')
 const _ = require('lodash')
 const Informix = require('informix').Informix
+const URL = require('url').URL
 
 const QUERY_GET_RESOURCE_FOR_USER = 'select resource_id  from resource where project_id=:challengeId ' +
   'and user_id=:userId and resource_role_id=:resourceRoleId'
@@ -28,6 +29,8 @@ const QUERY_DELETE_SUBMISSION = 'update submission set submission_status_id =' +
 
 const QUERY_DELETE_UPLOAD = 'update upload set upload_status_id =' + constant.UPLOAD_STATUS['Deleted'] +
   ' where project_id=:challengeId and resource_id=:resourceId and upload_id <> :uploadId'
+
+const QUERY_GET_PHASE_TYPE_ID = 'select phase_type_id from project_phase where project_phase_id=:phaseId and project_id=:challengeId'
 
 /**
  * Get resource for a given user, challenge id, and resource role id
@@ -75,6 +78,25 @@ function getAllowMultipleSubmission (db, challengeId) {
 }
 
 /**
+ * Get phase type id
+ * @param {Informix} db database
+ * @param {Number} phaseId phase id
+ * @param {Number} challengeId chaleenge id
+ */
+function getPhaseTypeId (db, phaseId, challengeId) {
+  return db.query(QUERY_GET_PHASE_TYPE_ID.replace(/:phaseId/, phaseId).replace(/:challengeId/, challengeId))
+    .then(cursor => {
+      return cursor.fetchAll({close: true})
+    })
+    .then(result => {
+      if (!_.isArray(result) || _.isEmpty(result)) {
+        throw new Error('Can not found phase type of phaseId: ' + phaseId)
+      }
+      return result[0][0]
+    })
+}
+
+/**
  * Add submission
  *
  * @param {Informix} db database
@@ -85,9 +107,11 @@ function getAllowMultipleSubmission (db, challengeId) {
  * @param {IDGenerator} idUploadGen IDGenerator instance of upload
  * @param {IDGenerator} idSubmissionGen IDGenerator instance of submission
  */
-async function addSubmission (dbOpts, challengeId, userId, phaseId, submissionType, idUploadGen, idSubmissionGen) {
+async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submissionType, idUploadGen, idSubmissionGen) {
   const informix = new Informix(dbOpts)
 
+  var uploadType = constant.UPLOAD_TYPE['Submission']
+  var phaseTypeId = getPhaseTypeId(informix, phaseId, challengeId)
   var resourceId = getResourceForUserId(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId)
   var isAllowMultipleSubmission = getAllowMultipleSubmission(informix, challengeId)
   var uploadId = idUploadGen.getNextId()
@@ -96,18 +120,26 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, submissionTy
   uploadId = await uploadId
   submissionId = await submissionId
   resourceId = await resourceId
+  phaseTypeId = await phaseTypeId
   isAllowMultipleSubmission = await isAllowMultipleSubmission
+
+  if (phaseTypeId === constant.PHASE_TYPE['Final Fix']) {
+    uploadType = constant.UPLOAD_TYPE['Final Fix']
+  }
+
+  const s3Url = new URL(url)
 
   logger.debug('add submission for resourceId: ' + resourceId +
         ' uploadId: ' + uploadId +
         ' submissionId: ' + submissionId +
-        ' allow multyple submission: ' + isAllowMultipleSubmission)
+        ' allow multyple submission: ' + isAllowMultipleSubmission +
+        ' uploadType: ' + uploadType)
 
   var ctx = informix.createContext()
   return ctx.begin()
-    .then(async () => {
-      var values = [ uploadId, challengeId, phaseId, resourceId, constant.UPLOAD_TYPE['Submission'], constant.UPLOAD_STATUS['Active'],
-        '"N/A"', userId, 'current', userId, 'current' ]
+    .then(() => {
+      var values = [ uploadId, challengeId, phaseId, resourceId, uploadType, constant.UPLOAD_STATUS['Active'],
+        '"' + s3Url.pathname.substring(1) + '"', userId, 'current', userId, 'current' ]
       logger.debug('insert upload with values : ' + values)
       return ctx.query(QUERY_INSERT_UPLOAD.replace(/:values/, values.join(',')))
     })

@@ -17,13 +17,11 @@ const sampleMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
-    submission: {
-      id: 111,
-      challengeId: 1234,
-      memberId: 4321,
-      url: 'http://content.topcoder.com/some/path',
-      type: 'Contest Submission'
-    }
+    submissionId: 111,
+    challengeId: 1234,
+    memberId: 4321,
+    url: 'https://topcoder-dev-submissions.s3.amazonaws.com/cfdbc0cf-6437-433e-8af1-c56f317f2afd',
+    type: 'Contest Submission'
   }
 }
 
@@ -51,13 +49,11 @@ const events = [
       value: JSON.stringify(_.merge({}, sampleMessage, {
         timestamp: 'invalid date',
         payload: {
-          submission: {
-            id: 0,
-            challengeId: 'a',
-            memberId: 'b',
-            url: 'invalid url',
-            type: null
-          }
+          id: 0,
+          challengeId: 'a',
+          memberId: 'b',
+          url: 'invalid url',
+          type: null
         }
       }))
     }
@@ -101,9 +97,9 @@ const producer = new Kafka.Producer({
 let eventId
 if (process.argv.length > 3) {
   // custom event
-  sampleMessage.payload.submission.challengeId = Number(process.argv[2])
-  sampleMessage.payload.submission.memberId = Number(process.argv[3])
-  sampleMessage.payload.submission.submissionPhaseId = Number(process.argv[4])
+  sampleMessage.payload.challengeId = Number(process.argv[2])
+  sampleMessage.payload.memberId = Number(process.argv[3])
+  sampleMessage.payload.submissionPhaseId = Number(process.argv[4])
   eventId = 9
   events[eventId] = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
 } else {

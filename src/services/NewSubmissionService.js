@@ -82,6 +82,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.challengeId,
     event.payload.memberId,
     event.payload.submissionPhaseId,
+    event.payload.url,
     event.payload.type,
     idUploadGen,
     idSubmissionGen

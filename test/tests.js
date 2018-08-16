@@ -541,7 +541,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
               logMessages[8].startsWith('{ Error: getaddrinfo ENOTFOUND')
             )
             done()
-          }, 5000)
+          }, 2000)
         })
     })
   })

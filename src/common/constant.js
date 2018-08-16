@@ -20,9 +20,16 @@ const SUBMISSION_STATUS = {
   'Active': 1,
   'Deleted': 5 }
 
+const PHASE_TYPE = {
+  'Submission': 2,
+  'Final Fix': 9,
+  'Specification Submission': 13
+}
+
 module.exports = {
   SUBMISSION_TYPE,
   SUBMISSION_STATUS,
   UPLOAD_TYPE,
-  UPLOAD_STATUS
+  UPLOAD_STATUS,
+  PHASE_TYPE
 }

@@ -14,7 +14,7 @@ const QUERY_MULTIPLE_SUB_CONFIG = 'select value from project_info where project_
   'project_info_type_id=28'
 
 const QUERY_INSERT_UPLOAD = 'insert into upload(upload_id, project_id, project_phase_id, resource_id,' +
-  'upload_type_id, upload_status_id, parameter, create_user, create_date, modify_user, modify_date) ' +
+  'upload_type_id, upload_status_id, parameter, url, create_user, create_date, modify_user, modify_date) ' +
   'values(:values)'
 
 const QUERY_INSERT_SUBMISSION = 'insert into submission (submission_id, upload_id, submission_status_id, ' +
@@ -139,7 +139,7 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
   return ctx.begin()
     .then(() => {
       var values = [ uploadId, challengeId, phaseId, resourceId, uploadType, constant.UPLOAD_STATUS['Active'],
-        '"' + s3Url.pathname.substring(1) + '"', userId, 'current', userId, 'current' ]
+        '"N/A"', '"' + s3Url.pathname.substring(1) + '"', userId, 'current', userId, 'current' ]
       logger.debug('insert upload with values : ' + values)
       return ctx.query(QUERY_INSERT_UPLOAD.replace(/:values/, values.join(',')))
     })

@@ -114,7 +114,7 @@ From previous data setup I got:
 Let's send event to kafka:
 
 ```bash
-docker exec -ti lsp-app bash -c "npm run produce-test-event 30005520 124916 95236"
+docker exec -ti lsp-app bash -c "npm run produce-test-event 30005520 132458 95236"
 ```
 
 [screenshot](https://drive.google.com/file/d/1qfduKglVW0WbtqU4Oym9H7s4zpT87VZo/view?usp=drivesdk)

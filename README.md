@@ -7,7 +7,7 @@
 
 ## Configuration
 
-The configuration can be found in the configuration file `./config/default.js`. 
+The configuration can be found in the configuration file `./config/default.js`.
 You can update the configuration file or set values to the corresponding environment variables.
 
 - `LOG_LEVEL` The log level, e.g. `debug`, `info`, or 'error'
@@ -26,6 +26,8 @@ You can update the configuration file or set values to the corresponding environ
 - `ID_SEQ_SUBMISSION` submission database sequence
 
 > NOTE: ALL COMMANDS BELOW EXECUTE UNDER ```<legacy-sub-procecssor>``` directory
+
+To build the application you must set the `DB_SERVER_NAME` environment variable. This variable holds the database hostname.
 
 ## Build Application Docker Image
 We only need to do this once

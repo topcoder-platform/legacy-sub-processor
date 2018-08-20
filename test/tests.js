@@ -22,13 +22,12 @@ const sampleMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
-    submission: {
-      id: 111,
-      challengeId: 1234,
-      memberId: 4321,
-      url: 'http://content.topcoder.com/some/path',
-      type: 'ContestSubmission'
-    }
+    submissionId: 111,
+    challengeId: 30005521,
+    memberId: 124916,
+    url: 'http://content.topcoder.com/some/path',
+    type: 'Contest Submission',
+    submissionPhaseId: 95245
   }
 }
 
@@ -155,13 +154,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           timestamp: 'invalid date',
           payload: {
-            submission: {
-              id: 0,
-              challengeId: 'a',
-              memberId: 'b',
-              url: 'invalid url',
-              type: null
-            }
+            submissionId: 0,
+            challengeId: 'a',
+            memberId: 'b',
+            url: 'invalid url',
+            type: null,
+            submissionPhaseId: 333
           }
         }))
       }
@@ -172,7 +170,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "timestamp" must be a number of milliseconds or valid date string, "id" must be a positive number, "challengeId" must be a number, "memberId" must be a number, "url" must be a valid uri, "type" must be a string')
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "timestamp" must be a number of milliseconds or valid date string, "submissionId" must be a positive number, "submissionId" must be a string, "challengeId" must be a number, "memberId" must be a number, "url" must be a valid uri, "type" must be a string')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
@@ -226,15 +224,13 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       })
   })
 
-  it('should skip message with null id value', (done) => {
+  it('should skip message with null submissionId value', (done) => {
     const m = {
       topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              id: null
-            }
+            submissionId: null
           }
         }))
       }
@@ -245,7 +241,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "id" must be a number')
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionId" must be a number, "submissionId" must be a string')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
@@ -253,15 +249,13 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       })
   })
 
-  it('should skip message with zero id value', (done) => {
+  it('should skip message with zero submissionId value', (done) => {
     const m = {
       topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              id: 0
-            }
+            submissionId: 0
           }
         }))
       }
@@ -272,7 +266,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "id" must be a positive number')
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionId" must be a positive number, "submissionId" must be a string')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
@@ -286,9 +280,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              challengeId: null
-            }
+            challengeId: null
           }
         }))
       }
@@ -313,9 +305,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              challengeId: 0
-            }
+            challengeId: 0
           }
         }))
       }
@@ -340,9 +330,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              memberId: null
-            }
+            memberId: null
           }
         }))
       }
@@ -367,9 +355,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              memberId: 0
-            }
+            memberId: 0
           }
         }))
       }
@@ -394,9 +380,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              url: null
-            }
+            url: null
           }
         }))
       }
@@ -421,9 +405,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              url: 'invalid'
-            }
+            url: 'invalid'
           }
         }))
       }
@@ -448,9 +430,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              type: null
-            }
+            type: null
           }
         }))
       }
@@ -475,9 +455,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submission: {
-              type: ''
-            }
+            type: ''
           }
         }))
       }
@@ -496,24 +474,101 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       })
   })
 
+  it('should skip message with null submissionPhaseId value', (done) => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          payload: {
+            submissionPhaseId: null
+          }
+        }))
+      }
+    }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 3)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionPhaseId" must be a number')
+          assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
+
+          done()
+        }, 2000)
+      })
+  })
+
+  it('should skip message with zero submissionPhaseId value', (done) => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          payload: {
+            submissionPhaseId: 0
+          }
+        }))
+      }
+    }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 3)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionPhaseId" must be a positive number')
+          assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
+
+          done()
+        }, 2000)
+      })
+  })
+
   it('should log error if the submission-api is unreachable', (done) => {
     mockSubmissionApi.close(() => {
       const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
       producer.send(m)
         .then((results) => {
           setTimeout(() => {
-            const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-            assert.equal(logMessages.length, 3)
-            assert.equal(logMessages[0], `Received ${messageInfo}`)
-            assert.equal(logMessages[1], `Failed to handle ${messageInfo}: connect ECONNREFUSED 127.0.0.1:3000`)
-            assert.ok(logMessages[2].startsWith('{ Error: connect ECONNREFUSED'))
-
             mockSubmissionApi.listen(3000)
-
+            const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+            assert.equal(logMessages.length, 9)
+            assert.equal(logMessages[0], `Received ${messageInfo}`)
+            assert.ok(logMessages[7].startsWith(`Failed to handle ${messageInfo}: connect ECONNREFUSED`) ||
+              logMessages[7].startsWith(`Failed to handle ${messageInfo}: getaddrinfo ENOTFOUND`)
+            )
+            assert.ok(logMessages[8].startsWith('{ Error: connect ECONNREFUSED') ||
+              logMessages[8].startsWith('{ Error: getaddrinfo ENOTFOUND')
+            )
             done()
           }, 2000)
         })
     })
+  })
+
+  it('should handle message successfully - unknown keys', (done) => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          payload: {
+            extraKey: 'extraKey'
+          }
+        }))
+      }
+    }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 11)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.ok(logMessages[6].startsWith('Submission was added with id:'))
+          assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
+
+          done()
+        }, 2000)
+      })
   })
 
   it('should handle message successfully', (done) => {
@@ -522,13 +577,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       .then((results) => {
         setTimeout(() => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-          assert.equal(logMessages.length, 5)
+          assert.equal(logMessages.length, 11)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          // mock-submission-api called
-          assert.equal(logMessages[1], 'PUT /submissions/111')
-          assert.ok(logMessages[2].startsWith('{"id":111,"legacySubmissionId":'))
-          assert.ok(logMessages[3].startsWith('Updated to the Submission API: id 111, legacy submission id'))
-          assert.equal(logMessages[4], `Completed handling ${messageInfo}`)
+          assert.ok(logMessages[6].startsWith('Submission was added with id:'))
+          assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
 
           done()
         }, 2000)

@@ -1,0 +1,175 @@
+version: '3.2'
+services:
+  tc-cache:
+    image: "redis:3.2.5"
+    ports:
+      - "6379:6379"
+
+  tc-informix:
+    image: "appiriodevops/tc-database-scripts:latest"
+    hostname: ${DB_SERVER_NAME}
+    container_name: iif_innovator_c
+    environment:
+      LICENSE: accept
+    ports:
+      - "2021:2021"
+      - "2022:2022"
+      - "27017:27017"
+      - "27018:27018"
+      - "27883:27883"
+    tty: true
+
+  tc-direct:
+    image: "appiriodevops/direct-app:latest"
+    links:
+      - "tc-informix"
+      - "tc-cache"
+      - "mock-services:tc-api.cloud.topcoder.com"
+    hostname: cockpit.cloud.topcoder.com
+    ports:
+      - "443:443"
+      - "8180:8180"
+      - "1198:1198"
+      - "1199:1199"
+      - "3973:3973"
+      - "5446:5446"
+
+  run-online-review:
+    image: "appiriodevops/online-review:run"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      - DISABLE_ONLINE_REVIEW=0
+      - DISABLE_AUTO_PILOT=0
+      - DISABLE_LATE_DELIVERABLES_TRACKER=1
+      - DISABLE_REVIEW_ASSIGNMENT=1
+    ports:
+      - "80:8080"
+    links:
+      - tc-informix:db
+      - "mock-services:tc-api.cloud.topcoder.com"
+    entrypoint: /root/scripts/run.sh
+
+  mock-services:
+    image: "appiriodevops/mock-services:latest"
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+
+  kafka:
+    build:
+      context: ./docker/kafka
+    image: kafka-ssl:1.0
+    container_name: kafka
+    ports:
+      - "9093:9093"
+      - "9092:9092"
+  # to override ssl related file
+  #  volumes:
+  #    - "./test/kafka-ssl:/kafka-ssl"
+    environment:
+      - "ENABLE_SSL=true"
+      - "TRUSTSTORE_PASSWORD=test1234"
+      - "KEYSTORE_PASSWORD=test1234"
+      - "KEY_PASSWORD=test1234"
+
+  mock-submission-api:
+    image: lsp-app:latest
+    container_name: mock-submission-api
+    volumes:
+      - ".:/app"
+    command: run mock-submission-api
+
+  lsp-app-install:
+    build:
+      context: ./docker/legacy-submission-processor
+    image: lsp-app:latest
+    volumes:
+      - ".:/app"
+    command: --unsafe-perm install
+
+  lsp-app:
+    build:
+      context: ./docker/legacy-submission-processor
+    image: lsp-app:latest
+    container_name: lsp-app
+    environment:
+      - "NODE_ENV=test"
+      - "port=3000"
+    volumes:
+      - ".:/app"
+    command: start
+    ports:
+      - "3300:3000"
+    links:
+      - "kafka:kafka-host"
+      - "mock-submission-api:submission-api-host"
+      - "tc-informix:informix"
+    depends_on:
+      - "kafka"
+      - "tc-informix"
+      - "mock-submission-api"
+
+  lsp-app-test:
+    image: lsp-app:latest
+    environment:
+      - "NODE_ENV=test"
+      - "PORT=3300"
+    volumes:
+      - ".:/app"
+    command: run test:docker
+    links:
+      - "kafka:kafka-host"
+      - "tc-informix:informix"
+    depends_on:
+      - "kafka"
+      - "tc-informix"
+
+  lsp-app-staging:
+    build:
+      context: ./docker/legacy-submission-processor
+      args:
+        servername: ${DB_SERVER_NAME}
+    image: lsp-app-staging:latest
+    container_name: lsp-app-staging
+    ports:
+      - "3000:3300"
+    environment:
+      - "NODE_ENV=staging"
+      - "PORT=3300"
+      - KAFKA_GROUP_ID=${KAFKA_GROUP_ID}
+      - KAFKA_URL=${KAFKA_URL}
+      - KAFKA_CLIENT_CERT=${KAFKA_CLIENT_CERT}
+      - KAFKA_CLIENT_CERT_KEY=${KAFKA_CLIENT_CERT_KEY}
+      - KAFKA_NEW_SUBMISSION_TOPIC=${KAFKA_NEW_SUBMISSION_TOPIC}
+      - KAFKA_NEW_SUBMISSION_ORIGINATOR=${KAFKA_NEW_SUBMISSION_ORIGINATOR}
+      - SUBMISSION_API_URL=${SUBMISSION_API_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ".:/app"
+    command: run start:docker
+
+  lsp-app-prod:
+    build:
+      context: ./docker/legacy-submission-processor
+      args:
+        servername: ${DB_SERVER_NAME}
+    image: lsp-app-prod:latest
+    container_name: lsp-app-prod
+    ports:
+      - "3000:3300"
+    environment:
+      - "NODE_ENV=production"
+      - "PORT=3300"
+      - KAFKA_GROUP_ID=${KAFKA_GROUP_ID}
+      - KAFKA_URL=${KAFKA_URL}
+      - KAFKA_CLIENT_CERT=${KAFKA_CLIENT_CERT}
+      - KAFKA_CLIENT_CERT_KEY=${KAFKA_CLIENT_CERT_KEY}
+      - KAFKA_NEW_SUBMISSION_TOPIC=${KAFKA_NEW_SUBMISSION_TOPIC}
+      - KAFKA_NEW_SUBMISSION_ORIGINATOR=${KAFKA_NEW_SUBMISSION_ORIGINATOR}
+      - SUBMISSION_API_URL=${SUBMISSION_API_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ".:/app"
+    command: run start:docker

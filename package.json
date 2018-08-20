@@ -4,19 +4,25 @@
   "description": "Topcoder - Submission Legacy Processor Application",
   "main": "index.js",
   "scripts": {
+    "start:docker": "npm --unsafe-perm install && node -r dotenv/config index",
+    "test:docker": "npm --unsafe-perm install && npm run test",
     "start": "node index",
     "lint": "standard --env mocha",
     "lint:fix": "standard --env mocha --fix",
     "mock-submission-api": "node test/mock-submission-api",
     "produce-test-event": "node test/produce-test-event",
-    "test": "nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
+    "test": "npm run lint && nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
   },
   "dependencies": {
+    "async-mutex": "^0.1.3",
     "axios": "^0.18.0",
     "config": "^1.30.0",
+    "dotenv": "^6.0.0",
+    "informix": "^0.8.0",
     "joi": "^13.4.0",
     "lodash": "^4.17.10",
     "no-kafka": "^3.2.10",
+    "topcoder-healthcheck-dropin": "^1.0.2",
     "winston": "^2.4.2"
   },
   "devDependencies": {

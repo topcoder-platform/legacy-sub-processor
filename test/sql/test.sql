@@ -1302,4 +1302,4 @@ VALUES(27, 30005522, 2, 450, 16, 1, '132456', current, '132456', current);
 UPDATE id_sequences SET next_block_start = 60000 WHERE name = 'upload_id_seq';
 UPDATE id_sequences SET next_block_start = 93000 WHERE name = 'submission_id_seq';
 
-ALTER TABLE table upload ADD url lvarchar(1000);
+alter table upload add url lvarchar(1000);

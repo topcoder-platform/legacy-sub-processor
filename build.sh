@@ -11,7 +11,7 @@ TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-sub-processor:$CIRC
 echo "================================"
 echo "Creating lsp-asp images"
 echo "================================"
-docker-compose -f ecs-docker-compose.yml build --build-arg servername=${DB_SERVER_NAME} lsp-app
+docker-compose -f ecs-docker-compose.yml build --build-arg servername=${DB_SERVER_NAME} --build-arg port=2020 lsp-app
 docker tag lsp-app:latest $TAG
 echo "================================"
 echo "lsp-asp images has created"

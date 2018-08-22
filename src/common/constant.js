@@ -1,6 +1,5 @@
 
 const SUBMISSION_TYPE = {
-  'challengesubmission': { id: 1, roleId: 1 },
   'Contest Submission': { id: 1, roleId: 1 },
   'Specification Submission': { id: 2, roleId: 17 },
   'Checkpoint Submission': { id: 3, roleId: 1 },
@@ -11,6 +10,7 @@ const UPLOAD_TYPE = {
   'Submission': 1,
   'Final Fix': 3
 }
+
 const UPLOAD_STATUS = {
   'Active': 1,
   'Deleted': 2
@@ -18,7 +18,8 @@ const UPLOAD_STATUS = {
 
 const SUBMISSION_STATUS = {
   'Active': 1,
-  'Deleted': 5 }
+  'Deleted': 5
+}
 
 const PHASE_TYPE = {
   'Submission': 2,

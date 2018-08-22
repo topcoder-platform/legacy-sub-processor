@@ -1,7 +1,7 @@
 version: 2
 defaults: &defaults
     docker:
-      - image: docker:17.11.0-ce-git        
+      - image: docker:17.11.0-ce-git
 install_dependency: &install_dependency
           name: Installation of build and deployment dependencies.
           command: |
@@ -16,7 +16,7 @@ restore_cache_settings_for_build: &restore_cache_settings_for_build
 save_cache_settings: &save_cache_settings
   key: docker-node-modules-lsp-{{ checksum "package-lock.json" }}
   paths:
-    - node_modules           
+    - node_modules
 
 jobs:
   # Build & Deploy against development backend
@@ -28,7 +28,7 @@ jobs:
       - run: *install_dependency
       - restore_cache: *restore_cache_settings_for_build
       - run: ./build.sh DEV
-      - save_cache: *save_cache_settings          
+      - save_cache: *save_cache_settings
       - deploy:
           command: |
             git clone --branch master https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
@@ -45,7 +45,7 @@ jobs:
       - restore_cache: *restore_cache_settings_for_build
       - restore_cache: *restore_cache_settings_for_build
       - run: ./build.sh PROD
-      - save_cache: *save_cache_settings          
+      - save_cache: *save_cache_settings
       - deploy:
           command: |
             git clone --branch master https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
@@ -61,9 +61,7 @@ workflows:
           filters:
             branches:
               only:
-                - dev-circleci 
                 - develop
-                - develop-informix
 
       # Production builds are exectuted only on tagged commits to the
       # master branch.

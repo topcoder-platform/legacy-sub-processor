@@ -22,7 +22,7 @@ const sampleMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
-    submissionId: 111,
+    id: 111,
     challengeId: 30005521,
     memberId: 124916,
     url: 'http://content.topcoder.com/some/path',
@@ -154,7 +154,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           timestamp: 'invalid date',
           payload: {
-            submissionId: 0,
+            id: 0,
             challengeId: 'a',
             memberId: 'b',
             url: 'invalid url',
@@ -170,7 +170,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "timestamp" must be a number of milliseconds or valid date string, "submissionId" must be a positive number, "submissionId" must be a string, "challengeId" must be a number, "memberId" must be a number, "url" must be a valid uri, "type" must be a string')
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "timestamp" must be a number of milliseconds or valid date string, "id" must be a positive number, "id" must be a string, "challengeId" must be a number, "memberId" must be a number, "url" must be a valid uri, "type" must be a string')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
@@ -224,13 +224,13 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       })
   })
 
-  it('should skip message with null submissionId value', (done) => {
+  it('should skip message with null id value', (done) => {
     const m = {
       topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submissionId: null
+            id: null
           }
         }))
       }
@@ -241,7 +241,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionId" must be a number, "submissionId" must be a string')
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "id" must be a number, "id" must be a string')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
@@ -249,13 +249,13 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       })
   })
 
-  it('should skip message with zero submissionId value', (done) => {
+  it('should skip message with zero id value', (done) => {
     const m = {
       topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            submissionId: 0
+            id: 0
           }
         }))
       }
@@ -266,7 +266,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionId" must be a positive number, "submissionId" must be a string')
+          assert.equal(logMessages[1], 'Skipped invalid event, reasons: "id" must be a positive number, "id" must be a string')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()

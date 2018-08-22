@@ -100,8 +100,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
       legacySubmissionId
     }, { headers: { 'Authorization': `Bearer ${token}` } })
   } else {
-    await axios.put(`/submissions/${event.payload.id}`, {
-      id: event.payload.id,
+    await axios.patch(`/submissions/${event.payload.id}`, {
       legacySubmissionId
     })
   }

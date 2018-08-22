@@ -38,10 +38,6 @@ services:
       dockerfile: docker/legacy-submission-processor/lspDockerfile
     image: lsp-app:latest
     container_name: lsp-app
-    environment:
-      - "PORT=3000"
-    ports:
-      - "3000:3000"
 
   lsp-app-test:
     build:

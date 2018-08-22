@@ -5,6 +5,7 @@ const config = require('config')
 const Axios = require('axios')
 const Joi = require('joi')
 const _ = require('lodash')
+const m2mAuth = require('tc-core-library-js').auth.m2m
 const logger = require('../common/logger')
 const LegacySubmissionIdService = require('./LegacySubmissionIdService')
 
@@ -90,10 +91,20 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   logger.debug('Submission was added with id: ' + legacySubmissionId)
 
   // Update to the Submission API
-  await axios.put(`/submissions/${event.payload.submissionId}`, {
-    id: event.payload.id,
-    legacySubmissionId
-  })
+  // M2M token necessary for pushing to Bus API
+  if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
+    const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
+    const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
+    await axios.put(`/submissions/${event.payload.submissionId}`, {
+      id: event.payload.id,
+      legacySubmissionId
+    }, { headers: { 'Authorization': `Bearer ${token}` } })
+  } else {
+    await axios.put(`/submissions/${event.payload.submissionId}`, {
+      id: event.payload.id,
+      legacySubmissionId
+    })
+  }
 
   logger.debug(`Updated to the Submission API: id ${event.payload.submissionId}, legacy submission id ${legacySubmissionId}`)
 }

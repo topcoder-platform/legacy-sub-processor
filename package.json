@@ -1,7 +1,7 @@
 {
-  "name": "tc-submission-legacy-processor",
+  "name": "legacy-sub-processor",
   "version": "1.0.0",
-  "description": "Topcoder - Submission Legacy Processor Application",
+  "description": "Topcoder - Legacy Submission Processor Application",
   "main": "index.js",
   "scripts": {
     "start:docker": "npm --unsafe-perm install && node -r dotenv/config index",
@@ -23,6 +23,7 @@
     "lodash": "^4.17.10",
     "no-kafka": "^3.2.10",
     "topcoder-healthcheck-dropin": "^1.0.2",
+    "tc-core-library-js": "appirio-tech/tc-core-library-js.git#feature/m2mtoken",
     "winston": "^2.4.2"
   },
   "devDependencies": {

@@ -3,6 +3,7 @@ set -eo pipefail
 ENV=$1
 AWS_ACCOUNT_ID=$(eval "echo \$${ENV}_AWS_ACCOUNT_ID")
 AWS_REGION=$(eval "echo \$${ENV}_AWS_REGION")
+DB_SERVER_NAME=$(eval "echo \$${ENV}_DB_SERVER_NAME")
 
 # Builds Docker image of the app.
 TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-sub-processor:$CIRCLE_SHA1
@@ -10,7 +11,7 @@ TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-sub-processor:$CIRC
 echo "================================"
 echo "Creating lsp-asp images"
 echo "================================"
-docker-compose -f ecs-docker-compose.yml build lsp-app
+docker-compose -f ecs-docker-compose.yml build --build-arg servername=${DB_SERVER_NAME} lsp-app
 docker tag lsp-app:latest $TAG
 echo "================================"
 echo "lsp-asp images has created"

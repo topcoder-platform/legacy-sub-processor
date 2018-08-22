@@ -7,7 +7,6 @@ services:
 
   tc-informix:
     image: "appiriodevops/tc-database-scripts:latest"
-    hostname: ${DB_SERVER_NAME}
     container_name: iif_innovator_c
     environment:
       LICENSE: accept
@@ -18,7 +17,7 @@ services:
       - "27018:27018"
       - "27883:27883"
     tty: true
-    
+
   kafka:
     build:
       context: ./docker/kafka
@@ -32,26 +31,20 @@ services:
       - "TRUSTSTORE_PASSWORD=test1234"
       - "KEYSTORE_PASSWORD=test1234"
       - "KEY_PASSWORD=test1234"
+
   lsp-app:
     build:
       context: ./
       dockerfile: docker/legacy-submission-processor/lspDockerfile
     image: lsp-app:latest
     container_name: lsp-app
-    environment:
-      - "NODE_ENV=test"
-      - "port=3000"
-    ports:
-      - "3300:3000"
-    links:
-      - "kafka:kafka-host"
-      - "tc-informix:informix"
-    depends_on:
-      - "kafka"
-      - "tc-informix"
 
   lsp-app-test:
-    image: lsp-app:latest
+    build:
+      context: ./
+      dockerfile: docker/legacy-submission-processor/lspDockerfile
+    image: lsp-app-test:latest
+    container_name: lsp-app-test
     environment:
       - "NODE_ENV=test"
       - "PORT=3300"

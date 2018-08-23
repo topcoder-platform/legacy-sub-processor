@@ -95,8 +95,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
     const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
     const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
-    await axios.put(`/submissions/${event.payload.id}`, {
-      id: event.payload.id,
+    await axios.patch(`/submissions/${event.payload.id}`, {
       legacySubmissionId
     }, { headers: { 'Authorization': `Bearer ${token}` } })
   } else {

@@ -8,7 +8,7 @@ const server = http.createServer((req, res) => {
   logger.debug(`${req.method} ${req.url}`)
 
   // PUT /submissions/:id
-  if (req.method === 'PUT' && req.url.match(/^\/submissions\/[1-9]\d*$/)) {
+  if ((req.method === 'PUT' || req.method === 'PATCH') && req.url.match(/^\/submissions\/[1-9]\d*$/)) {
     let body = ''
     req.on('data', chunk => {
       // Convert Buffer to string

@@ -70,7 +70,7 @@ On edit project page set:
 - forum Id: 0
 - Add resource:
     - Role: Submitter
-    - Name: Yoshi
+    - Name: user
 - Save
 [see screenshot](https://drive.google.com/file/d/13OELZLIbFPS1WdENGOcfSzC3TsTSJhPT/view?usp=drivesdk)
 
@@ -108,7 +108,7 @@ docker-compose up lsp-app
 ## Send Test data
 From previous data setup I got:
 - challengeId = 30005520
-- memberId = 124916 (Yoshi)
+- memberId = 132458 (user)
 - submissionPhaseId = 95236
 
 Let's send event to kafka:

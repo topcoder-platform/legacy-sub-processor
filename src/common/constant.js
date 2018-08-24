@@ -27,10 +27,17 @@ const PHASE_TYPE = {
   'Specification Submission': 13
 }
 
+const CHALLENGE_TYPE = {
+  'Component': 1,
+  'Application': 2,
+  'Studio': 3
+}
+
 module.exports = {
   SUBMISSION_TYPE,
   SUBMISSION_STATUS,
   UPLOAD_TYPE,
   UPLOAD_STATUS,
-  PHASE_TYPE
+  PHASE_TYPE,
+  CHALLENGE_TYPE
 }

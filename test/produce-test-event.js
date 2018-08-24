@@ -17,6 +17,7 @@ const sampleMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
+    id: 111,
     submissionId: 111,
     challengeId: 1234,
     memberId: 4321,

@@ -7,12 +7,6 @@ const _ = require('lodash')
 const Informix = require('informix').Informix
 const URL = require('url').URL
 
-const QUERY_GET_RESOURCE_FOR_USER = 'select resource_id  from resource where project_id=:challengeId ' +
-  'and user_id=:userId and resource_role_id=:resourceRoleId'
-
-const QUERY_MULTIPLE_SUB_CONFIG = 'select value from project_info where project_id =:challengeId and ' +
-  'project_info_type_id=28'
-
 const QUERY_INSERT_UPLOAD = 'insert into upload(upload_id, project_id, project_phase_id, resource_id,' +
   'upload_type_id, upload_status_id, parameter, url, create_user, create_date, modify_user, modify_date) ' +
   'values(:values)'
@@ -30,7 +24,12 @@ const QUERY_DELETE_SUBMISSION = 'update submission set submission_status_id =' +
 const QUERY_DELETE_UPLOAD = 'update upload set upload_status_id =' + constant.UPLOAD_STATUS['Deleted'] +
   ' where project_id=:challengeId and resource_id=:resourceId and upload_id <> :uploadId'
 
-const QUERY_GET_PHASE_TYPE_ID = 'select phase_type_id from project_phase where project_phase_id=:phaseId and project_id=:challengeId'
+const QUERY_GET_CHALLENGE_PROPERTIES = 'select r.resource_id, pi28.value, pp.phase_type_id, pcl.project_type_id ' +
+  'from project p, project_category_lu pcl, resource r, project_phase pp, outer project_info pi28 ' +
+  'where p.project_category_id = pcl.project_category_id and p.project_id = r.project_id ' +
+  'and r.user_id = :userId and r.resource_role_id = :resourceRoleId and p.project_id = pp.project_id ' +
+  'and pp.project_phase_id = :phaseId and p.project_id = pi28.project_id ' +
+  'and pi28.project_info_type_id = 28 and p.project_id = :challengeId'
 
 /**
  * Get resource for a given user, challenge id, and resource role id
@@ -39,60 +38,23 @@ const QUERY_GET_PHASE_TYPE_ID = 'select phase_type_id from project_phase where p
  * @param {Number} challengeId challenge id
  * @param {Number} userId user id
  * @param {Number} resourceRoleId resource role id
+ * @param {Number} phaseId submission phasse id
+ * @returns {Array} [resourceId, isAllowMultipleSumbmission, phaseTypeId, challengeTypeId]
  */
-function getResourceForUserId (db, challengeId, userId, resourceRoleId) {
-  return db.query(QUERY_GET_RESOURCE_FOR_USER.replace(/:challengeId/, challengeId)
+function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseId) {
+  return db.query(QUERY_GET_CHALLENGE_PROPERTIES.replace(/:challengeId/, challengeId)
     .replace(/:userId/, userId)
-    .replace(/:resourceRoleId/, resourceRoleId))
+    .replace(/:resourceRoleId/, resourceRoleId)
+    .replace(/:phaseId/, phaseId))
     .then((cursor) => {
       return cursor.fetchAll({close: true})
     })
     .then((result) => {
-      logger.debug('Resource id result for : challenge ' + challengeId + ' memberId: ' +
-                  userId + ' is ' + result)
+      logger.debug('Challenge properties for: ' + challengeId + ' are: ' + result)
       if (!_.isArray(result) || _.isEmpty(result)) {
-        throw new Error('null or empty result get resourceId for : challenge ' + challengeId + ' memberId: ' +
-                  userId)
+        throw new Error('null or empty result get challenge properties for : challenge ' + challengeId)
       }
-      return result[0][0]
-    })
-}
-
-/**
- * Get "Allow multiple submissions" property
- *
- * @param {Informix} db database
- * @param {Number} challengeId challenge id
- */
-function getAllowMultipleSubmission (db, challengeId) {
-  return db.query(QUERY_MULTIPLE_SUB_CONFIG.replace(/:challengeId/, challengeId))
-    .then(cursor => {
-      return cursor.fetchAll({close: true})
-    })
-    .then(result => {
-      if (_.isArray(result) && !_.isEmpty(result)) {
-        return result[0][0] === 'true'
-      }
-      return false
-    })
-}
-
-/**
- * Get phase type id
- * @param {Informix} db database
- * @param {Number} phaseId phase id
- * @param {Number} challengeId chaleenge id
- */
-function getPhaseTypeId (db, phaseId, challengeId) {
-  return db.query(QUERY_GET_PHASE_TYPE_ID.replace(/:phaseId/, phaseId).replace(/:challengeId/, challengeId))
-    .then(cursor => {
-      return cursor.fetchAll({close: true})
-    })
-    .then(result => {
-      if (!_.isArray(result) || _.isEmpty(result)) {
-        throw new Error('Can not found phase type of phaseId: ' + phaseId)
-      }
-      return result[0][0]
+      return result[0]
     })
 }
 
@@ -109,19 +71,23 @@ function getPhaseTypeId (db, phaseId, challengeId) {
  */
 async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submissionType, idUploadGen, idSubmissionGen) {
   const informix = new Informix(dbOpts)
+  let props = getChallengeProperties(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
+  let uploadType = constant.UPLOAD_TYPE['Submission']
+  let uploadId = idUploadGen.getNextId()
+  let submissionId = idSubmissionGen.getNextId()
 
-  var uploadType = constant.UPLOAD_TYPE['Submission']
-  var phaseTypeId = getPhaseTypeId(informix, phaseId, challengeId)
-  var resourceId = getResourceForUserId(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId)
-  var isAllowMultipleSubmission = getAllowMultipleSubmission(informix, challengeId)
-  var uploadId = idUploadGen.getNextId()
-  var submissionId = idSubmissionGen.getNextId()
-
+  props = await props
   uploadId = await uploadId
   submissionId = await submissionId
-  resourceId = await resourceId
-  phaseTypeId = await phaseTypeId
-  isAllowMultipleSubmission = await isAllowMultipleSubmission
+
+  let resourceId = props[0]
+  let isAllowMultipleSubmission = props[1] === 'true'
+  let phaseTypeId = props[2]
+  let challengeTypeId = props[3]
+
+  if (challengeTypeId === constant.CHALLENGE_TYPE['Studio']) {
+    isAllowMultipleSubmission = true
+  }
 
   if (phaseTypeId === constant.PHASE_TYPE['Final Fix']) {
     uploadType = constant.UPLOAD_TYPE['Final Fix']
@@ -133,7 +99,8 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
         ' uploadId: ' + uploadId +
         ' submissionId: ' + submissionId +
         ' allow multyple submission: ' + isAllowMultipleSubmission +
-        ' uploadType: ' + uploadType)
+        ' uploadType: ' + uploadType +
+        ' challengeTypeId: ' + challengeTypeId)
 
   var ctx = informix.createContext()
   return ctx.begin()

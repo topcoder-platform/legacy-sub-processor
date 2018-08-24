@@ -5,7 +5,6 @@ const logger = require('../common/logger')
 const constant = require('../common/constant')
 const _ = require('lodash')
 const Informix = require('informix').Informix
-const URL = require('url').URL
 
 const QUERY_GET_RESOURCE_FOR_USER = 'select resource_id  from resource where project_id=:challengeId ' +
   'and user_id=:userId and resource_role_id=:resourceRoleId'
@@ -127,8 +126,6 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
     uploadType = constant.UPLOAD_TYPE['Final Fix']
   }
 
-  const s3Url = new URL(url)
-
   logger.debug('add submission for resourceId: ' + resourceId +
         ' uploadId: ' + uploadId +
         ' submissionId: ' + submissionId +
@@ -139,7 +136,7 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
   return ctx.begin()
     .then(() => {
       var values = [ uploadId, challengeId, phaseId, resourceId, uploadType, constant.UPLOAD_STATUS['Active'],
-        '"N/A"', '"' + s3Url.pathname.substring(1) + '"', userId, 'current', userId, 'current' ]
+        '"N/A"', '"' + url + '"', userId, 'current', userId, 'current' ]
       logger.debug('insert upload with values : ' + values)
       return ctx.query(QUERY_INSERT_UPLOAD.replace(/:values/, values.join(',')))
     })

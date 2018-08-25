@@ -20,6 +20,7 @@ const eventSchema = Joi.object().keys({
   'mime-type': Joi.string().required(),
   payload: Joi.object().keys({
     id: Joi.alternatives().try(Joi.id(), Joi.string().uuid()).required(),
+    resource: Joi.alternatives().try(Joi.string().valid('submission'), Joi.string().valid('review')),
     challengeId: Joi.id(),
     memberId: Joi.id(),
     submissionPhaseId: Joi.id(),
@@ -76,6 +77,10 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   }
   if (event.originator !== config.KAFKA_NEW_SUBMISSION_ORIGINATOR) {
     logger.debug(`Skipped event from originator ${event.originator}`)
+    return
+  }
+  if (event.payload.resource !== 'submission') {
+    logger.debug(`Skipped event from resource ${event.payload.resource}`)
     return
   }
 

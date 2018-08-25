@@ -21,6 +21,7 @@ const sampleMessage = {
     submissionId: 111,
     challengeId: 1234,
     memberId: 4321,
+    resource: 'submission',
     url: 'https://topcoder-dev-submissions.s3.amazonaws.com/cfdbc0cf-6437-433e-8af1-c56f317f2afd',
     type: 'Contest Submission'
   }
@@ -54,6 +55,7 @@ const events = [
           challengeId: 'a',
           memberId: 'b',
           url: 'invalid url',
+          resource: 'submission',
           type: null
         }
       }))

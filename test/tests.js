@@ -25,6 +25,7 @@ const sampleMessage = {
     id: 111,
     challengeId: 30005521,
     memberId: 124916,
+    resource: 'submission',
     url: 'http://content.topcoder.com/some/path',
     type: 'Contest Submission',
     submissionPhaseId: 95245
@@ -217,6 +218,31 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages.length, 3)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
           assert.equal(logMessages[1], 'Skipped event from originator wrong-originator')
+          assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
+
+          done()
+        }, 2000)
+      })
+  })
+
+  it('should skip message with wrong resource value', (done) => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          payload: {
+            resource: 'review'
+          }
+        }))
+      }
+    }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 3)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.equal(logMessages[1], 'Skipped event from resource review')
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()

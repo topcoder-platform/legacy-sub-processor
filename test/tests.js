@@ -12,6 +12,9 @@ const logger = require('../src/common/logger')
 // Start mock submission api
 const mockSubmissionApi = require('./mock-submission-api')
 
+// Default timeout
+const timeout = 1000
+
 // Start the app
 require('../index')
 
@@ -64,7 +67,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   it('should not consume message from a different topic', (done) => {
     producer.send({ topic: 'different-topic', message: { value: 'message' } })
       .then(() => {
-        setTimeout(done, 2000)
+        setTimeout(done, timeout)
       })
   })
 
@@ -80,7 +83,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -96,7 +99,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -112,7 +115,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -128,7 +131,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -144,7 +147,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -175,7 +178,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -198,7 +201,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -221,7 +224,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -246,7 +249,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -271,7 +274,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -296,7 +299,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -321,7 +324,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -346,7 +349,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -371,7 +374,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -396,7 +399,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -421,7 +424,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -446,7 +449,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -471,7 +474,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -496,7 +499,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -521,7 +524,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -546,7 +549,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[2], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -567,7 +570,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
               logMessages[8].startsWith('{ Error: getaddrinfo ENOTFOUND')
             )
             done()
-          }, 2000)
+          }, timeout)
         })
     })
   })
@@ -593,7 +596,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 
@@ -609,7 +612,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
 
           done()
-        }, 2000)
+        }, timeout)
       })
   })
 })

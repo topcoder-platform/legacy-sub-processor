@@ -5,6 +5,7 @@ const config = require('config')
 const Axios = require('axios')
 const Joi = require('joi')
 const _ = require('lodash')
+const m2mAuth = require('tc-core-library-js').auth.m2m
 const logger = require('../common/logger')
 const LegacySubmissionIdService = require('./LegacySubmissionIdService')
 
@@ -18,26 +19,30 @@ const eventSchema = Joi.object().keys({
   timestamp: Joi.date().required(),
   'mime-type': Joi.string().required(),
   payload: Joi.object().keys({
-    submission: Joi.object().keys({
-      id: Joi.id(),
-      challengeId: Joi.id(),
-      memberId: Joi.id(),
-      url: Joi.string().uri().required(),
-      type: Joi.string().required()
-    }).required()
-  }).required()
+    id: Joi.alternatives().try(Joi.id(), Joi.string().uuid()).required(),
+    resource: Joi.alternatives().try(Joi.string().valid('submission'), Joi.string().valid('review')),
+    challengeId: Joi.id(),
+    memberId: Joi.id(),
+    submissionPhaseId: Joi.id(),
+    url: Joi.string().uri().required(),
+    type: Joi.string().required(),
+    isFileSubmission: Joi.boolean().optional(),
+    fileType: Joi.string().optional(),
+    filename: Joi.string().optional()
+  }).required().unknown(true)
 })
 
 // Axios instance to make calls to the Submission API
 const axios = Axios.create({
-  baseURL: config.SUBMISSION_API_URL
+  baseURL: config.SUBMISSION_API_URL,
+  timeout: config.SUBMISSION_TIMEOUT
 })
 
 /**
  * Handle new submission message.
  * @param {String} value the message value (JSON string)
  */
-async function handle (value) {
+async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   if (!value) {
     logger.debug('Skipped null or empty event')
     return
@@ -58,7 +63,7 @@ async function handle (value) {
   }
 
   // Validate event
-  const validationResult = Joi.validate(event, eventSchema, { abortEarly: false })
+  const validationResult = Joi.validate(event, eventSchema, { abortEarly: false, stripUnknown: true })
   if (validationResult.error) {
     const validationErrorMessage = _.map(validationResult.error.details, 'message').join(', ')
     logger.debug(`Skipped invalid event, reasons: ${validationErrorMessage}`)
@@ -74,17 +79,37 @@ async function handle (value) {
     logger.debug(`Skipped event from originator ${event.originator}`)
     return
   }
+  if (event.payload.resource !== 'submission') {
+    logger.debug(`Skipped event from resource ${event.payload.resource}`)
+    return
+  }
 
   // Generate a legacy submission id
-  const legacySubmissionId = LegacySubmissionIdService.generate()
+  const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.challengeId,
+    event.payload.memberId,
+    event.payload.submissionPhaseId,
+    event.payload.url,
+    event.payload.type,
+    idUploadGen,
+    idSubmissionGen
+  )
+  logger.debug('Submission was added with id: ' + legacySubmissionId)
 
   // Update to the Submission API
-  await axios.put(`/submissions/${event.payload.submission.id}`, {
-    id: event.payload.submission.id,
-    legacySubmissionId
-  })
+  // M2M token necessary for pushing to Bus API
+  if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
+    const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
+    const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
+    await axios.patch(`/submissions/${event.payload.id}`, {
+      legacySubmissionId
+    }, { headers: { 'Authorization': `Bearer ${token}` } })
+  } else {
+    await axios.patch(`/submissions/${event.payload.id}`, {
+      legacySubmissionId
+    })
+  }
 
-  logger.debug(`Updated to the Submission API: id ${event.payload.submission.id}, legacy submission id ${legacySubmissionId}`)
+  logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
 }
 
 module.exports = {

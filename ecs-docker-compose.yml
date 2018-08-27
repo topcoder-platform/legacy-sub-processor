@@ -1,0 +1,57 @@
+version: '3.2'
+services:
+  tc-cache:
+    image: "redis:3.2.5"
+    ports:
+      - "6379:6379"
+
+  tc-informix:
+    image: "appiriodevops/tc-database-scripts:latest"
+    container_name: iif_innovator_c
+    environment:
+      LICENSE: accept
+    ports:
+      - "2021:2021"
+      - "2022:2022"
+      - "27017:27017"
+      - "27018:27018"
+      - "27883:27883"
+    tty: true
+
+  kafka:
+    build:
+      context: ./docker/kafka
+    image: kafka-ssl:1.0
+    container_name: kafka
+    ports:
+      - "9093:9093"
+      - "9092:9092"
+    environment:
+      - "ENABLE_SSL=true"
+      - "TRUSTSTORE_PASSWORD=test1234"
+      - "KEYSTORE_PASSWORD=test1234"
+      - "KEY_PASSWORD=test1234"
+
+  lsp-app:
+    build:
+      context: ./
+      dockerfile: docker/legacy-submission-processor/lspDockerfile
+    image: lsp-app:latest
+    container_name: lsp-app
+
+  lsp-app-test:
+    build:
+      context: ./
+      dockerfile: docker/legacy-submission-processor/lspDockerfile
+    image: lsp-app-test:latest
+    container_name: lsp-app-test
+    environment:
+      - "NODE_ENV=test"
+      - "PORT=3300"
+    command: run test:docker
+    links:
+      - "kafka:kafka-host"
+      - "tc-informix:informix"
+    depends_on:
+      - "kafka"
+      - "tc-informix"

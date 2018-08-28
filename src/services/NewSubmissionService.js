@@ -71,10 +71,11 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   }
 
   // Check topic and originator
-  if (event.topic !== config.KAFKA_NEW_SUBMISSION_TOPIC) {
+  if (event.topic !== config.KAFKA_NEW_SUBMISSION_TOPIC && event.topic !== config.KAFKA_UPDATE_SUBMISSION_TOPIC) {
     logger.debug(`Skipped event from topic ${event.topic}`)
     return
   }
+
   if (event.originator !== config.KAFKA_NEW_SUBMISSION_ORIGINATOR) {
     logger.debug(`Skipped event from originator ${event.originator}`)
     return
@@ -84,32 +85,44 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
     return
   }
 
-  // Generate a legacy submission id
-  const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.challengeId,
-    event.payload.memberId,
-    event.payload.submissionPhaseId,
-    event.payload.url,
-    event.payload.type,
-    idUploadGen,
-    idSubmissionGen
-  )
-  logger.debug('Submission was added with id: ' + legacySubmissionId)
+  if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
+    logger.info('new create topic')
+    const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.challengeId,
+      event.payload.memberId,
+      event.payload.submissionPhaseId,
+      event.payload.url,
+      event.payload.type,
+      idUploadGen,
+      idSubmissionGen
+    )
+    logger.debug('Submission was added with id: ' + legacySubmissionId)
 
-  // Update to the Submission API
-  // M2M token necessary for pushing to Bus API
-  if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
-    const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
-    const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
-    await axios.patch(`/submissions/${event.payload.id}`, {
-      legacySubmissionId
-    }, { headers: { 'Authorization': `Bearer ${token}` } })
+    // Update to the Submission API
+    // M2M token necessary for pushing to Bus API
+    if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
+      const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
+      const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
+      await axios.patch(`/submissions/${event.payload.id}`, {
+        legacySubmissionId
+      }, { headers: { 'Authorization': `Bearer ${token}` } })
+    } else {
+      await axios.patch(`/submissions/${event.payload.id}`, {
+        legacySubmissionId
+      })
+    }
+
+    logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
   } else {
-    await axios.patch(`/submissions/${event.payload.id}`, {
-      legacySubmissionId
-    })
+    logger.info('new update topic')
+    await LegacySubmissionIdService.updateUpload(dbOpts, event.payload.challengeId,
+      event.payload.memberId,
+      event.payload.submissionPhaseId,
+      event.payload.url,
+      event.payload.type,
+      event.payload.legacySubmissionId
+    )
+    logger.debug(`Uploaded submission updated legacy submission id : ${event.payload.legacySubmissionId}`)
   }
-
-  logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
 }
 
 module.exports = {

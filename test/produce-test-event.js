@@ -98,13 +98,18 @@ const producer = new Kafka.Producer({
 // Get event id from argument
 // npm run produce-test-event 0
 let eventId
-if (process.argv.length > 3) {
+
+if (process.argv.length > 4) {
   // custom event
-  sampleMessage.payload.challengeId = Number(process.argv[2])
-  sampleMessage.payload.memberId = Number(process.argv[3])
-  sampleMessage.payload.submissionPhaseId = Number(process.argv[4])
+  sampleMessage.topic = process.argv[2]
+  sampleMessage.payload.challengeId = Number(process.argv[3])
+  sampleMessage.payload.memberId = Number(process.argv[4])
+  sampleMessage.payload.submissionPhaseId = Number(process.argv[5])
+  if (typeof process.argv[6] !== 'undefined') {
+    sampleMessage.payload.legacySubmissionId = process.argv[6]
+  }
   eventId = 9
-  events[eventId] = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
+  events[eventId] = { topic: process.argv[2], message: { value: JSON.stringify(sampleMessage) } }
 } else {
   eventId = Number(process.argv[2])
 }

@@ -30,8 +30,17 @@ const QUERY_GET_CHALLENGE_PROPERTIES = 'select r.resource_id, pi28.value, pp.pha
   'and pp.project_phase_id = :phaseId and p.project_id = pi28.project_id ' +
   'and pi28.project_info_type_id = 28 and p.project_id = :challengeId'
 
+const QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID = 'update upload u set u.url = ":newUrl" where ' +
+  'u.upload_id in (select s.upload_id from submission s, upload uu where uu.upload_id = s.upload_id and s.submission_id = :submissionId)'
+
+const QUERY_UPDATE_UPLOAD = 'update upload u set u.url = ":newUrl" where ' +
+  'u.upload_id in (select upload_id from ' +
+  ' (select first 1 upload_id from upload where project_id = :challengeId and project_phase_id = :phaseId ' +
+  ' and resource_id = :resourceId and upload_status_id = 1 order by create_date desc))'
+
 /**
- * Get resource for a given user, challenge id, and resource role id
+ * Get upload resource, isAllowMultipleSumbmission property, phase type, cand challenge type
+ * for a given user, challenge id, resource role id and phase id
  *
  * @param {Informix} db database
  * @param {Number} challengeId challenge id
@@ -60,7 +69,7 @@ function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseI
 /**
  * Add submission
  *
- * @param {Informix} db database
+ * @param {Object} dbOpts database options
  * @param {Number} challengeId challenge id
  * @param {Number} userId user id
  * @param {Number} phaseId phase id
@@ -159,4 +168,39 @@ function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
     })
 }
 
-module.exports = { addSubmission }
+/**
+ * Update upload url of latest user submission
+ * If submission is provided then it will use it
+ *
+ * @param {Object} dbOpts database options
+ * @param {Number} challengeId challenge id
+ * @param {Number} userId user id
+ * @param {Number} phaseId phase id
+ * @param {String} url new url value
+ * @param {String} submissionType submission type
+ * @param {Number} submissionId submission id
+ */
+async function updateUpload (dbOpts, challengeId, userId, phaseId, url, submissionType, submissionId) {
+  let sql
+  const s3Url = new URL(url)
+  const db = new Informix(dbOpts)
+  if (submissionId > 0) {
+    sql = QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID.replace(/:newUrl/, s3Url.pathname.substring(1)).replace(/:submissionId/, submissionId)
+    logger.info(sql)
+  } else {
+    logger.debug('no valid submission id')
+    let props = await getChallengeProperties(db, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
+    sql = QUERY_UPDATE_UPLOAD.replace(/:newUrl/, s3Url.pathname.substring(1)).replace(/:challengeId/, challengeId)
+      .replace(/:phaseId/, phaseId).replace(/:resourceId/, props[0])
+  }
+
+  return db.query(sql)
+    .then(cursor =>
+      cursor.close()
+    )
+}
+
+module.exports = {
+  addSubmission,
+  updateUpload
+}

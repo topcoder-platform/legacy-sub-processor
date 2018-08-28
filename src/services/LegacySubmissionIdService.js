@@ -41,10 +41,12 @@ const QUERY_GET_CHALLENGE_PROPERTIES = 'select r.resource_id, pi28.value, pp.pha
  * @returns {Array} [resourceId, isAllowMultipleSumbmission, phaseTypeId, challengeTypeId]
  */
 function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseId) {
-  return db.query(QUERY_GET_CHALLENGE_PROPERTIES.replace(/:challengeId/, challengeId)
+  const sql = QUERY_GET_CHALLENGE_PROPERTIES.replace(/:challengeId/, challengeId)
     .replace(/:userId/, userId)
     .replace(/:resourceRoleId/, resourceRoleId)
-    .replace(/:phaseId/, phaseId))
+    .replace(/:phaseId/, phaseId)
+  logger.debug(`executing SQL: ${sql}`)
+  return db.query(sql)
     .then((cursor) => {
       return cursor.fetchAll({close: true})
     })

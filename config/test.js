@@ -18,7 +18,10 @@ module.exports = {
   KAFKA_CLIENT_CERT_KEY: './test/kafka-ssl/client.key',
 
   // The topic from which the app consumes events
-  KAFKA_NEW_SUBMISSION_TOPIC: 'new-submission-topic',
+  KAFKA_NEW_SUBMISSION_TOPIC: 'submission.notification.create',
+
+  // topic for update event
+  KAFKA_UPDATE_SUBMISSION_TOPIC: 'submission.notification.update',
 
   // The event originator
   KAFKA_NEW_SUBMISSION_ORIGINATOR: 'new-submission-originator',

@@ -82,7 +82,7 @@ function check () {
 
 // Start to listen from the Kafka topic
 consumer.init({
-  subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC],
+  subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC],
   handler: handleMessages
 })
   .then(() => {

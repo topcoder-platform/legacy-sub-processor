@@ -91,7 +91,8 @@ Change challengeId with your challenge id above. The result is your submission p
 ## Create Kafka topic
 
 ```bash
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic"
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
 ```
 
 ## Installing Legacy Submission Proc. app requirements
@@ -114,7 +115,7 @@ From previous data setup I got:
 Let's send event to kafka:
 
 ```bash
-docker exec -ti lsp-app bash -c "npm run produce-test-event 30005520 132458 95236"
+docker exec -ti lsp-app bash -c "npm run produce-test-event submission.notification.create 30005520 132458 95236"
 ```
 
 [screenshot](https://drive.google.com/file/d/1qfduKglVW0WbtqU4Oym9H7s4zpT87VZo/view?usp=drivesdk)

@@ -30,11 +30,11 @@ const QUERY_GET_CHALLENGE_PROPERTIES = 'select r.resource_id, pi28.value, pp.pha
   'and pp.project_phase_id = :phaseId and p.project_id = pi28.project_id ' +
   'and pi28.project_info_type_id = 28 and p.project_id = :challengeId'
 
-const QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID = 'update upload u set u.url = ":newUrl" where ' +
-  'u.upload_id in (select s.upload_id from submission s, upload uu where uu.upload_id = s.upload_id and s.submission_id = :submissionId)'
+const QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID = 'update upload set url = ":newUrl" where ' +
+  'upload_id in (select s.upload_id from submission s, upload uu where uu.upload_id = s.upload_id and s.submission_id = :submissionId)'
 
-const QUERY_UPDATE_UPLOAD = 'update upload u set u.url = ":newUrl" where ' +
-  'u.upload_id in (select upload_id from ' +
+const QUERY_UPDATE_UPLOAD = 'update upload set url = ":newUrl" where ' +
+  'upload_id in (select upload_id from ' +
   ' (select first 1 upload_id from upload where project_id = :challengeId and project_phase_id = :phaseId ' +
   ' and resource_id = :resourceId and upload_status_id = 1 order by create_date desc))'
 

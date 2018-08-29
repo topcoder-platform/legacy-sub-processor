@@ -182,17 +182,16 @@ function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
  */
 async function updateUpload (dbOpts, challengeId, userId, phaseId, url, submissionType, submissionId) {
   let sql
-  const s3Url = new URL(url)
   const db = new Informix(dbOpts)
   if (submissionId > 0) {
-    sql = QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID.replace(/:newUrl/, s3Url.pathname.substring(1)).replace(/:submissionId/, submissionId)
-    logger.info(sql)
+    sql = QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID.replace(/:newUrl/, url).replace(/:submissionId/, submissionId)
   } else {
-    logger.debug('no valid submission id')
+    logger.warn('no valid submission id')
     let props = await getChallengeProperties(db, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
-    sql = QUERY_UPDATE_UPLOAD.replace(/:newUrl/, s3Url.pathname.substring(1)).replace(/:challengeId/, challengeId)
-      .replace(/:phaseId/, phaseId).replace(/:resourceId/, props[0])
+    sql = QUERY_UPDATE_UPLOAD.replace(/:newUrl/, url).replace(/:challengeId/, challengeId).replace(/:phaseId/, phaseId)
+      .replace(/:resourceId/, props[0])
   }
+  logger.debug(sql)
 
   return db.query(sql)
     .then(cursor =>

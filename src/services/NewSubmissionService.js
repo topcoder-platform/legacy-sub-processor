@@ -26,9 +26,7 @@ const eventSchema = Joi.object().keys({
     submissionPhaseId: Joi.id(),
     url: Joi.string().uri().required(),
     type: Joi.string().required(),
-    isFileSubmission: Joi.boolean().optional(),
-    fileType: Joi.string().optional(),
-    filename: Joi.string().optional()
+    legacySubmissionId: Joi.number().integer().positive().optional()
   }).required().unknown(true)
 })
 
@@ -99,17 +97,16 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
 
     // Update to the Submission API
     // M2M token necessary for pushing to Bus API
+    let options = null
     if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
       const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
       const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
-      await axios.patch(`/submissions/${event.payload.id}`, {
-        legacySubmissionId
-      }, { headers: { 'Authorization': `Bearer ${token}` } })
-    } else {
-      await axios.patch(`/submissions/${event.payload.id}`, {
-        legacySubmissionId
-      })
+      options = { headers: { 'Authorization': `Bearer ${token}` } }
     }
+
+    await axios.patch(`/submissions/${event.payload.id}`, {
+      legacySubmissionId
+    }, options)
 
     logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
   } else {
@@ -119,7 +116,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
       event.payload.submissionPhaseId,
       event.payload.url,
       event.payload.type,
-      event.payload.legacySubmissionId
+      event.payload.legacySubmissionId || 0
     )
     logger.debug(`Uploaded submission updated legacy submission id : ${event.payload.legacySubmissionId}`)
   }

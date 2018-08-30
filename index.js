@@ -49,6 +49,7 @@ function handleMessages (messages, topic, partition) {
 
 // Initialize the consumer
 const consumer = new Kafka.GroupConsumer({
+  handlerConcurrency: 1,
   groupId: config.KAFKA_GROUP_ID,
   connectionString: config.KAFKA_URL,
   ssl: {

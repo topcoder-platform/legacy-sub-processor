@@ -110,13 +110,15 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
 
     logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
   } else {
+    const sub = await axios.get(`/submissions/${event.payload.id}`)
+
     logger.info('new update topic')
-    await LegacySubmissionIdService.updateUpload(dbOpts, event.payload.challengeId,
-      event.payload.memberId,
-      event.payload.submissionPhaseId,
-      event.payload.url,
-      event.payload.type,
-      event.payload.legacySubmissionId || 0
+    await LegacySubmissionIdService.updateUpload(dbOpts, sub.challengeId,
+      sub.memberId,
+      sub.submissionPhaseId,
+      sub.url,
+      sub.type,
+      sub.legacySubmissionId || 0
     )
     logger.debug(`Uploaded submission updated legacy submission id : ${event.payload.legacySubmissionId}`)
   }

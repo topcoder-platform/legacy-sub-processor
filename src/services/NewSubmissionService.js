@@ -78,6 +78,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
     logger.debug(`Skipped event from originator ${event.originator}`)
     return
   }
+
   if (event.payload.resource !== 'submission') {
     logger.debug(`Skipped event from resource ${event.payload.resource}`)
     return
@@ -91,13 +92,17 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
     apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
   }
 
+  let sub = await axios.get(`/submissions/${event.payload.id}`, apiOptions)
+  sub = sub.data
+  logger.debug(`fetched latest record for ${event.payload.id}: ${JSON.stringify(sub)}`)
+
   if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
     logger.info('new create topic')
-    const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, event.payload.challengeId,
-      event.payload.memberId,
-      event.payload.submissionPhaseId,
-      event.payload.url,
-      event.payload.type,
+    const legacySubmissionId = await LegacySubmissionIdService.addSubmission(dbOpts, sub.challengeId,
+      sub.memberId,
+      sub.submissionPhaseId,
+      sub.url,
+      sub.type,
       idUploadGen,
       idSubmissionGen
     )
@@ -110,16 +115,13 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
 
     logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
   } else {
-    const sub = await axios.get(`/submissions/${event.payload.id}`, apiOptions)
-    logger.debug(`fetched latest record for ${event.payload.id}: ${JSON.stringify(sub.data)}`)
-
     logger.info('new update topic')
-    await LegacySubmissionIdService.updateUpload(dbOpts, sub.data.challengeId,
-      sub.data.memberId,
-      sub.data.submissionPhaseId,
-      sub.data.url,
-      sub.data.type,
-      sub.data.legacySubmissionId || 0
+    await LegacySubmissionIdService.updateUpload(dbOpts, sub.challengeId,
+      sub.memberId,
+      sub.submissionPhaseId,
+      sub.url,
+      sub.type,
+      sub.legacySubmissionId || 0
     )
     logger.debug(`Uploaded submission updated legacy submission id : ${event.payload.legacySubmissionId}`)
   }

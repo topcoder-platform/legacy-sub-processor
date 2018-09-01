@@ -116,6 +116,10 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
     logger.debug(`Updated to the Submission API: id ${event.payload.id}, legacy submission id ${legacySubmissionId}`)
   } else {
     logger.info('new update topic')
+    if (event.timestamp > sub.updated) { // CWD-- is the event actually newer than the data in the db? maybe ES hasn't updated yet so let's take the event data for the URL
+      sub.url = _.get(event, 'payload.url', sub.url)
+    }
+
     await LegacySubmissionIdService.updateUpload(dbOpts, sub.challengeId,
       sub.memberId,
       sub.submissionPhaseId,
@@ -123,7 +127,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
       sub.type,
       sub.legacySubmissionId || 0
     )
-    logger.debug(`Uploaded submission updated legacy submission id : ${event.payload.legacySubmissionId}`)
+    logger.debug(`Uploaded submission updated legacy submission id : ${event.payload.legacySubmissionId} with url ${sub.url}`)
   }
 }
 

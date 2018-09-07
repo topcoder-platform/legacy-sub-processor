@@ -121,12 +121,16 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
         cursor.close()
         return ctx.commit()
       })
-      .then(() => { 'legacyUploadId': uploadId })
+      .then(() => {
+        return { 'legacyUploadId': uploadId }
+      })
       .catch(e => {
         ctx.rollback()
         throw e
       })
-      .finally(() => ctx.end())
+      .finally(() => {
+        return ctx.end()
+      })
   } else {
     return ctx.begin()
       .then(() => {
@@ -156,12 +160,16 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
         }
         return ctx.commit()
       })
-      .then(() => { 'legacySubmissionId': submissionId })
+      .then(() => {
+        return { 'legacySubmissionId': submissionId }
+      })
       .catch(e => {
         ctx.rollback()
         throw e
       })
-      .finally(() => ctx.end())
+      .finally(() => {
+        return ctx.end()
+      })
   }
 }
 

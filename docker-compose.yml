@@ -90,16 +90,18 @@ services:
   lsp-app:
     build:
       context: ./docker/legacy-submission-processor
+      args:
+        servername: informix
     image: lsp-app:latest
     container_name: lsp-app
     environment:
-      - "NODE_ENV=test"
-      - "port=3000"
+      - "NODE_ENV=development"
+      - "PORT=3300"
     volumes:
       - ".:/app"
-    command: start
+    command: run start:docker
     ports:
-      - "3300:3000"
+      - "3000:3300"
     links:
       - "kafka:kafka-host"
       - "mock-submission-api:submission-api-host"

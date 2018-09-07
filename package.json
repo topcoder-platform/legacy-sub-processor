@@ -18,12 +18,13 @@
     "axios": "^0.18.0",
     "config": "^1.30.0",
     "dotenv": "^6.0.0",
+    "http-json-response": "^1.0.1",
     "informix": "^0.8.0",
     "joi": "^13.4.0",
     "lodash": "^4.17.10",
     "no-kafka": "^3.2.10",
-    "topcoder-healthcheck-dropin": "^1.0.2",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#feature/m2mtoken",
+    "topcoder-healthcheck-dropin": "^1.0.2",
     "winston": "^2.4.2"
   },
   "devDependencies": {

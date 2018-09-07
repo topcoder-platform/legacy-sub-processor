@@ -9,7 +9,7 @@ module.exports = {
   KAFKA_GROUP_ID: process.env.KAFKA_GROUP_ID || 'tc-submission-legacy-processor',
 
   // The comma delimited list of initial brokers list
-  KAFKA_URL: process.env.KAFKA_URL || 'ssl://localhost:9093',
+  KAFKA_URL: process.env.KAFKA_URL || 'ssl://kafka-host:9093',
 
   // The client cert, can be (1) the path to the cert file, or (2) the cert content
   KAFKA_CLIENT_CERT: process.env.KAFKA_CLIENT_CERT || './test/kafka-ssl/client.crt',
@@ -18,13 +18,13 @@ module.exports = {
   KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY || './test/kafka-ssl/client.key',
 
   // The topic from which the app consumes events
-  KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission',
+  KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission.notification.create',
 
   // topic for update event
   KAFKA_UPDATE_SUBMISSION_TOPIC: process.env.KAFKA_UPDATE_SUBMISSION_TOPIC || 'submission.notification.update',
 
   // The event originator
-  KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR || 'challenge',
+  KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR || 'submission-api',
 
   // The Submission API URL
   SUBMISSION_API_URL: process.env.SUBMISSION_API_URL || 'http://localhost:3000',

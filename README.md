@@ -46,11 +46,13 @@ docker-compose build kafka
 Run Kafka server:
 ```bash
 docker-compose up -d kafka
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic"
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
 ```
 
 ## Install App Requirements
 ```bash
+export DB_SERVER_NAME=informix
 docker-compose up lsp-app-install
 ```
 

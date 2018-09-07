@@ -8,9 +8,7 @@ const winston = require('winston')
 const logger = new winston.Logger({
   level: config.LOG_LEVEL,
   transports: [
-    new winston.transports.Console({
-      timestamp: () => new Date().toISOString()
-    })
+    new winston.transports.Console()
   ]
 })
 

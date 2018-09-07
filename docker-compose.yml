@@ -83,6 +83,8 @@ services:
   lsp-app-install:
     build:
       context: ./docker/legacy-submission-processor
+      args:
+        servername: ${DB_SERVER_NAME}
     image: lsp-app:latest
     volumes:
       - ".:/app"

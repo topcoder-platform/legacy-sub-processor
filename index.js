@@ -10,8 +10,22 @@ const logger = require('./src/common/logger')
 const NewSubmissionService = require('./src/services/NewSubmissionService')
 const IDGenerator = require('./src/services/IdGenerator')
 const healthcheck = require('topcoder-healthcheck-dropin')
+const Informix = require('informix').Informix
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
+
+// db informix option
+const dbOpts = {
+  database: config.DB_NAME,
+  username: config.DB_USERNAME,
+  password: config.DB_PASSWORD,
+  pool: {
+    min: 0,
+    max: 10
+  }
+}
+
+const db = new Informix(dbOpts)
 
 /**
  * Handle the messsages from Kafka.
@@ -28,7 +42,7 @@ function handleMessages (messages, topic, partition) {
     logger.debug(`Received ${messageInfo}`)
 
     // Handle the event
-    return NewSubmissionService.handle(messageValue, dbOpts, idUploadGen, idSubmissionGen)
+    return NewSubmissionService.handle(messageValue, db, idUploadGen, idSubmissionGen)
       .then(() => {
         logger.debug(`Completed handling ${messageInfo}`)
 
@@ -58,15 +72,8 @@ const consumer = new Kafka.GroupConsumer({
   }
 })
 
-// db informix option
-const dbOpts = {
-  database: config.DB_NAME,
-  username: config.DB_USERNAME,
-  password: config.DB_PASSWORD
-}
-
-const idUploadGen = new IDGenerator(dbOpts, config.ID_SEQ_UPLOAD)
-const idSubmissionGen = new IDGenerator(dbOpts, config.ID_SEQ_SUBMISSION)
+const idUploadGen = new IDGenerator(db, config.ID_SEQ_UPLOAD)
+const idSubmissionGen = new IDGenerator(db, config.ID_SEQ_SUBMISSION)
 
 // check if there is kafka connection alive
 function check () {

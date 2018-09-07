@@ -27,7 +27,7 @@ module.exports = {
   KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR || 'submission-api',
 
   // The Submission API URL
-  SUBMISSION_API_URL: process.env.SUBMISSION_API_URL || 'http://localhost:3000',
+  SUBMISSION_API_URL: process.env.SUBMISSION_API_URL || 'http://submission-api-host:3000',
 
   // The Submission API timeout
   SUBMISSION_TIMEOUT: process.env.SUBMISSION_TIMEOUT || '10000',

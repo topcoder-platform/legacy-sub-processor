@@ -5,7 +5,6 @@ const logger = require('../common/logger')
 const util = require('util')
 const _ = require('lodash')
 const Mutex = require('async-mutex').Mutex
-const Informix = require('informix').Informix
 
 const QUERY_GET_ID_SEQ = 'select next_block_start, block_size from id_sequences where name = ":seqName"'
 const QUERY_UPDATE_ID_SEQ = 'update id_sequences set next_block_start = :nextStart where name = ":seqName"'
@@ -19,8 +18,8 @@ class IDGenerator {
    * @param {Informix} dbOpts database options
    * @param {String} seqName sequence name
    */
-  constructor (dbOpts, seqName) {
-    this.db = new Informix(dbOpts)
+  constructor (db, seqName) {
+    this.db = db
     this.seqName = seqName
     this._availableId = 0
     this.mutex = new Mutex()

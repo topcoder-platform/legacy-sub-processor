@@ -38,17 +38,37 @@ const sampleFinalFixMessage = {
   submissionPhaseId: 95308
 }
 
+const normalMessage = {
+  'resource': 'submission',
+  'id': 'cfdbc0cf-6437-433e-8af1-c56f317f2afd',
+  'type': 'Contest Submission',
+  'url': 'https://topcoder-dev-submissions.s3.amazonaws.com/cfdbc0cf-6437-433e-8af1-c56f317f2afd',
+  'memberId': 124916,
+  'challengeId': 30005521,
+  'created': '2018-07-31T17:05:17.835Z',
+  'updated': '2018-07-31T17:05:17.835Z',
+  'createdBy': 'callmekatootie',
+  'updatedBy': 'callmekatootie',
+  'submissionPhaseId': 95245,
+  'isFileSubmission': true,
+  'fileType': 'zip',
+  'filename': 'Photo on 7-30-18 at 11.47 AM #2.jpg'
+}
+
 const responses = {
   '/submissions/111': sampleMessage,
   '/submissions/112': sampleUpdateMessage,
-  '/submissions/113': sampleFinalFixMessage
+  '/submissions/113': sampleFinalFixMessage,
+  '/submissions/cfdbc0cf-6437-433e-8af1-c56f317f2afd': normalMessage
 }
 
 const server = http.createServer((req, res) => {
   logger.debug(`${req.method} ${req.url}`)
 
   // PUT /submissions/:id
-  if ((req.method === 'PUT' || req.method === 'PATCH') && req.url.match(/^\/submissions\/[1-9]\d*$/)) {
+  if ((req.method === 'PUT' || req.method === 'PATCH') &&
+      (req.url.match(/^\/submissions\/[1-9]\d*$/) ||
+       req.url.match(/^\/submissions\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/gi))) {
     let body = ''
     req.on('data', chunk => {
       // Convert Buffer to string
@@ -61,8 +81,10 @@ const server = http.createServer((req, res) => {
       res.statusCode = 200
       res.end()
     })
-  } else if (req.method === 'GET' && req.url.match(/^\/submissions\/[1-9]\d*$/)) {
-    return send(res, 200, responses[req.url])
+  } else if (req.method === 'GET' &&
+    (req.url.match(/^\/submissions\/[1-9]\d*$/) ||
+     req.url.match(/^\/submissions\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/gi))) {
+    return send(res, 200, responses[req.url] || normalMessage)
   } else {
     // 404 for other routes
     res.statusCode = 404

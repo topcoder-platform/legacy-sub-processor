@@ -4,7 +4,6 @@
 const logger = require('../common/logger')
 const constant = require('../common/constant')
 const _ = require('lodash')
-const Informix = require('informix').Informix
 
 const QUERY_INSERT_UPLOAD = 'insert into upload(upload_id, project_id, project_phase_id, resource_id,' +
   'upload_type_id, upload_status_id, parameter, url, create_user, create_date, modify_user, modify_date) ' +
@@ -55,7 +54,7 @@ function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseI
     .replace(/:resourceRoleId/, resourceRoleId)
     .replace(/:phaseId/, phaseId))
     .then((cursor) => {
-      return cursor.fetchAll({close: true})
+      return cursor.fetchAll({ close: true })
     })
     .then((result) => {
       logger.debug('Challenge properties for: ' + challengeId + ' are: ' + result)
@@ -67,9 +66,30 @@ function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseI
 }
 
 /**
+ * Set delete to previous submission
+ *
+ * @param {Context} ctx informix db context
+ * @param {Number} challengeId challenge id
+ * @param {Number} resourceId resource id
+ * @param {Number} uploadId upload id
+ */
+function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
+  return ctx.query(QUERY_DELETE_UPLOAD.replace(/:challengeId/, challengeId).replace(/:resourceId/, resourceId)
+    .replace(/:uploadId/, uploadId))
+    .then(cursor => {
+      cursor.close()
+      return ctx.query(QUERY_DELETE_SUBMISSION.replace(/:challengeId/, challengeId)
+        .replace(/:resourceId/, resourceId))
+    })
+    .then(cursor => {
+      return cursor.close()
+    })
+}
+
+/**
  * Add submission
  *
- * @param {Object} dbOpts database options
+ * @param {Object} informix the database
  * @param {Number} challengeId challenge id
  * @param {Number} userId user id
  * @param {Number} phaseId phase id
@@ -77,8 +97,7 @@ function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseI
  * @param {IDGenerator} idUploadGen IDGenerator instance of upload
  * @param {IDGenerator} idSubmissionGen IDGenerator instance of submission
  */
-async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submissionType, idUploadGen, idSubmissionGen) {
-  const informix = new Informix(dbOpts)
+async function addSubmission (informix, challengeId, userId, phaseId, url, submissionType, idUploadGen, idSubmissionGen) {
   const props = await getChallengeProperties(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
 
   let uploadType = null
@@ -174,31 +193,10 @@ async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submiss
 }
 
 /**
- * Set delete to previous submission
- *
- * @param {Context} ctx informix db context
- * @param {Number} challengeId challenge id
- * @param {Number} resourceId resource id
- * @param {Number} uploadId upload id
- */
-function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
-  return ctx.query(QUERY_DELETE_UPLOAD.replace(/:challengeId/, challengeId).replace(/:resourceId/, resourceId)
-    .replace(/:uploadId/, uploadId))
-    .then(cursor => {
-      cursor.close()
-      return ctx.query(QUERY_DELETE_SUBMISSION.replace(/:challengeId/, challengeId)
-        .replace(/:resourceId/, resourceId))
-    })
-    .then(cursor => {
-      return cursor.close()
-    })
-}
-
-/**
  * Update upload url of latest user submission
  * If submission is provided then it will use it
  *
- * @param {Object} dbOpts database options
+ * @param {Object} informix the database
  * @param {Number} challengeId challenge id
  * @param {Number} userId user id
  * @param {Number} phaseId phase id
@@ -206,21 +204,20 @@ function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
  * @param {String} submissionType submission type
  * @param {Number} submissionId submission id
  */
-async function updateUpload (dbOpts, challengeId, userId, phaseId, url, submissionType, submissionId) {
-  const db = new Informix(dbOpts)
+async function updateUpload (informix, challengeId, userId, phaseId, url, submissionType, submissionId) {
   let sql
 
   if (submissionId > 0) {
     sql = QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID.replace(/:newUrl/, url).replace(/:submissionId/, submissionId)
   } else {
     logger.warn('no valid submission id')
-    let props = await getChallengeProperties(db, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
+    let props = await getChallengeProperties(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
     sql = QUERY_UPDATE_UPLOAD.replace(/:newUrl/, url).replace(/:challengeId/, challengeId).replace(/:phaseId/, phaseId)
       .replace(/:resourceId/, props[0])
   }
   logger.debug(sql)
 
-  return db.query(sql).then(cursor => cursor.close())
+  return informix.query(sql).then(cursor => cursor.close())
 }
 
 module.exports = {

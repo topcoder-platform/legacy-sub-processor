@@ -40,7 +40,7 @@ const axios = Axios.create({
  * Handle new submission message.
  * @param {String} value the message value (JSON string)
  */
-async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
+async function handle (value, db, idUploadGen, idSubmissionGen) {
   if (!value) {
     logger.debug('Skipped null or empty event')
     return
@@ -97,7 +97,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
   logger.debug(`fetched latest record for ${event.payload.id}: ${JSON.stringify(sub)}`)
 
   if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
-    const idObject = await LegacySubmissionIdService.addSubmission(dbOpts, sub.challengeId,
+    const idObject = await LegacySubmissionIdService.addSubmission(db, sub.challengeId,
       sub.memberId,
       sub.submissionPhaseId,
       sub.url,
@@ -118,7 +118,7 @@ async function handle (value, dbOpts, idUploadGen, idSubmissionGen) {
       sub.url = _.get(event, 'payload.url', sub.url)
     }
 
-    await LegacySubmissionIdService.updateUpload(dbOpts, sub.challengeId,
+    await LegacySubmissionIdService.updateUpload(db, sub.challengeId,
       sub.memberId,
       sub.submissionPhaseId,
       sub.url,

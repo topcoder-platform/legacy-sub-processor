@@ -1,10 +1,10 @@
 /**
  * The service to handle new submission events.
  */
+const _ = require('lodash')
 const config = require('config')
 const Axios = require('axios')
 const Joi = require('joi')
-const _ = require('lodash')
 const logger = require('../common/logger')
 const LegacySubmissionIdService = require('./LegacySubmissionIdService')
 

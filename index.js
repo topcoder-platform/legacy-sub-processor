@@ -2,6 +2,7 @@
  * The main entry of the application.
  */
 
+const _ = require('lodash')
 const Promise = require('bluebird')
 const Kafka = require('no-kafka')
 const config = require('config')

@@ -4,7 +4,6 @@
 const logger = require('../common/logger')
 const constant = require('../common/constant')
 const _ = require('lodash')
-const Informix = require('informix').Informix
 
 const QUERY_INSERT_UPLOAD = 'insert into upload(upload_id, project_id, project_phase_id, resource_id,' +
   'upload_type_id, upload_status_id, parameter, url, create_user, create_date, modify_user, modify_date) ' +
@@ -57,7 +56,7 @@ function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseI
   logger.debug(`executing SQL: ${sql}`)
   return db.query(sql)
     .then((cursor) => {
-      return cursor.fetchAll({close: true})
+      return cursor.fetchAll({ close: true })
     })
     .then((result) => {
       logger.debug('Challenge properties for: ' + challengeId + ' are: ' + result)
@@ -65,87 +64,6 @@ function getChallengeProperties (db, challengeId, userId, resourceRoleId, phaseI
         throw new Error('null or empty result get challenge properties for : challenge ' + challengeId)
       }
       return result[0]
-    })
-}
-
-/**
- * Add submission
- *
- * @param {Object} dbOpts database options
- * @param {Number} challengeId challenge id
- * @param {Number} userId user id
- * @param {Number} phaseId phase id
- * @param {String} submissionType submission type
- * @param {IDGenerator} idUploadGen IDGenerator instance of upload
- * @param {IDGenerator} idSubmissionGen IDGenerator instance of submission
- */
-async function addSubmission (dbOpts, challengeId, userId, phaseId, url, submissionType, idUploadGen, idSubmissionGen) {
-  const informix = new Informix(dbOpts)
-  let props = getChallengeProperties(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
-  let uploadType = constant.UPLOAD_TYPE['Submission']
-  let uploadId = idUploadGen.getNextId()
-  let submissionId = idSubmissionGen.getNextId()
-
-  props = await props
-  uploadId = await uploadId
-  submissionId = await submissionId
-
-  let resourceId = props[0]
-  let isAllowMultipleSubmission = props[1] === 'true'
-  let phaseTypeId = props[2]
-  let challengeTypeId = props[3]
-
-  if (challengeTypeId === constant.CHALLENGE_TYPE['Studio']) {
-    isAllowMultipleSubmission = true
-  }
-
-  if (phaseTypeId === constant.PHASE_TYPE['Final Fix']) {
-    uploadType = constant.UPLOAD_TYPE['Final Fix']
-  }
-
-  logger.debug('add submission for resourceId: ' + resourceId +
-        ' uploadId: ' + uploadId +
-        ' submissionId: ' + submissionId +
-        ' allow multyple submission: ' + isAllowMultipleSubmission +
-        ' uploadType: ' + uploadType +
-        ' challengeTypeId: ' + challengeTypeId)
-
-  var ctx = informix.createContext()
-  return ctx.begin()
-    .then(() => {
-      var values = [ uploadId, challengeId, phaseId, resourceId, uploadType, constant.UPLOAD_STATUS['Active'],
-        '"N/A"', '"' + url + '"', userId, 'current', userId, 'current' ]
-      logger.debug('insert upload with values : ' + values)
-      return ctx.query(QUERY_INSERT_UPLOAD.replace(/:values/, values.join(',')))
-    })
-    .then((cursor) => {
-      cursor.close()
-      var values = [ submissionId, uploadId, constant.SUBMISSION_STATUS['Active'], constant.SUBMISSION_TYPE[submissionType].id,
-        userId, 'current', userId, 'current' ]
-      logger.debug('insert submission with values: ' + values)
-      return ctx.query(QUERY_INSERT_SUBMISSION.replace(/:values/, values.join(',')))
-    })
-    .then((cursor) => {
-      cursor.close()
-      var values = [ resourceId, submissionId, userId, 'current',
-        userId, 'current' ]
-      logger.debug('insert resource_submission with values: ' + values)
-      return ctx.query(QUERY_INSERT_RESOURCE_SUBMISSION.replace(/:values/, values.join(',')))
-    })
-    .then(async (cursor) => {
-      cursor.close()
-      if (!isAllowMultipleSubmission) {
-        await deletePreviousSubmission(ctx, challengeId, resourceId, uploadId)
-      }
-      return ctx.commit()
-    })
-    .then(() => {
-      ctx.end()
-      return submissionId
-    })
-    .catch(e => {
-      ctx.rollback()
-      throw e
     })
 }
 
@@ -171,10 +89,116 @@ function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
 }
 
 /**
+ * Add submission
+ *
+ * @param {Object} informix the database
+ * @param {Number} challengeId challenge id
+ * @param {Number} userId user id
+ * @param {Number} phaseId phase id
+ * @param {String} submissionType submission type
+ * @param {IDGenerator} idUploadGen IDGenerator instance of upload
+ * @param {IDGenerator} idSubmissionGen IDGenerator instance of submission
+ */
+async function addSubmission (informix, challengeId, userId, phaseId, url, submissionType, idUploadGen, idSubmissionGen) {
+  const props = await getChallengeProperties(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
+
+  let uploadType = null
+  let uploadId = null
+  let submissionId = null
+  let resourceId = props[0]
+  let isAllowMultipleSubmission = props[1] === 'true'
+  let phaseTypeId = props[2]
+  let challengeTypeId = props[3]
+
+  if (challengeTypeId === constant.CHALLENGE_TYPE['Studio']) {
+    isAllowMultipleSubmission = true
+  }
+
+  uploadId = await idUploadGen.getNextId()
+  if (phaseTypeId === constant.PHASE_TYPE['Final Fix']) {
+    uploadType = constant.UPLOAD_TYPE['Final Fix']
+  } else {
+    submissionId = await idSubmissionGen.getNextId()
+    uploadType = constant.UPLOAD_TYPE['Submission']
+  }
+
+  logger.debug('add submission for resourceId: ' + resourceId +
+        ' uploadId: ' + uploadId +
+        ' submissionId: ' + submissionId +
+        ' allow multyple submission: ' + isAllowMultipleSubmission +
+        ' uploadType: ' + uploadType +
+        ' challengeTypeId: ' + challengeTypeId)
+
+  var ctx = informix.createContext()
+  if (uploadType === constant.UPLOAD_TYPE['Final Fix']) {
+    return ctx.begin()
+      .then(() => {
+        var values = [ uploadId, challengeId, phaseId, resourceId, uploadType, constant.UPLOAD_STATUS['Active'],
+          '"N/A"', '"' + url + '"', userId, 'current', userId, 'current' ]
+        logger.debug('insert upload with values : ' + values)
+        return ctx.query(QUERY_INSERT_UPLOAD.replace(/:values/, values.join(',')))
+      })
+      .then((cursor) => {
+        cursor.close()
+        return ctx.commit()
+      })
+      .then(() => {
+        return { 'legacyUploadId': uploadId }
+      })
+      .catch(e => {
+        ctx.rollback()
+        throw e
+      })
+      .finally(() => {
+        return ctx.end()
+      })
+  } else {
+    return ctx.begin()
+      .then(() => {
+        var values = [ uploadId, challengeId, phaseId, resourceId, uploadType, constant.UPLOAD_STATUS['Active'],
+          '"N/A"', '"' + url + '"', userId, 'current', userId, 'current' ]
+        logger.debug('insert upload with values : ' + values)
+        return ctx.query(QUERY_INSERT_UPLOAD.replace(/:values/, values.join(',')))
+      })
+      .then((cursor) => {
+        cursor.close()
+        var values = [ submissionId, uploadId, constant.SUBMISSION_STATUS['Active'], constant.SUBMISSION_TYPE[submissionType].id,
+          userId, 'current', userId, 'current' ]
+        logger.debug('insert submission with values: ' + values)
+        return ctx.query(QUERY_INSERT_SUBMISSION.replace(/:values/, values.join(',')))
+      })
+      .then((cursor) => {
+        cursor.close()
+        var values = [ resourceId, submissionId, userId, 'current',
+          userId, 'current' ]
+        logger.debug('insert resource_submission with values: ' + values)
+        return ctx.query(QUERY_INSERT_RESOURCE_SUBMISSION.replace(/:values/, values.join(',')))
+      })
+      .then(async (cursor) => {
+        cursor.close()
+        if (!isAllowMultipleSubmission) {
+          await deletePreviousSubmission(ctx, challengeId, resourceId, uploadId)
+        }
+        return ctx.commit()
+      })
+      .then(() => {
+        return { 'legacySubmissionId': submissionId }
+      })
+      .catch(e => {
+        ctx.rollback()
+        throw e
+      })
+      .finally(() => {
+        return ctx.end()
+      })
+  }
+}
+
+/**
  * Update upload url of latest user submission
  * If submission is provided then it will use it
  *
- * @param {Object} dbOpts database options
+ * @param {Object} informix the database
  * @param {Number} challengeId challenge id
  * @param {Number} userId user id
  * @param {Number} phaseId phase id
@@ -182,23 +206,20 @@ function deletePreviousSubmission (ctx, challengeId, resourceId, uploadId) {
  * @param {String} submissionType submission type
  * @param {Number} submissionId submission id
  */
-async function updateUpload (dbOpts, challengeId, userId, phaseId, url, submissionType, submissionId) {
+async function updateUpload (informix, challengeId, userId, phaseId, url, submissionType, submissionId) {
   let sql
-  const db = new Informix(dbOpts)
+
   if (submissionId > 0) {
     sql = QUERY_UPDATE_UPLOAD_BY_SUBMISSION_ID.replace(/:newUrl/, url).replace(/:submissionId/, submissionId)
   } else {
     logger.warn('no valid submission id')
-    let props = await getChallengeProperties(db, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
+    let props = await getChallengeProperties(informix, challengeId, userId, constant.SUBMISSION_TYPE[submissionType].roleId, phaseId)
     sql = QUERY_UPDATE_UPLOAD.replace(/:newUrl/, url).replace(/:challengeId/, challengeId).replace(/:phaseId/, phaseId)
       .replace(/:resourceId/, props[0])
   }
   logger.debug(sql)
 
-  return db.query(sql)
-    .then(cursor =>
-      cursor.close()
-    )
+  return informix.query(sql).then(cursor => cursor.close())
 }
 
 module.exports = {

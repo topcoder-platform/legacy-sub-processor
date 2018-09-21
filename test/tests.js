@@ -35,6 +35,40 @@ const sampleMessage = {
   }
 }
 
+// The good sample message
+const sampleUpdateMessage = {
+  topic: config.KAFKA_UPDATE_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 112,
+    challengeId: 30005521,
+    memberId: 124916,
+    resource: 'submission',
+    url: 'http://content.topcoder.com/some/path/updated',
+    type: 'Contest Submission',
+    submissionPhaseId: 95245
+  }
+}
+
+// The good final fix sample message
+const sampleFinalFixMessage = {
+  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 113,
+    challengeId: 30005540,
+    memberId: 132458,
+    resource: 'submission',
+    url: 'http://content.topcoder.com/some/path',
+    type: 'Contest Submission',
+    submissionPhaseId: 95308
+  }
+}
+
 const producer = new Kafka.Producer({
   connectionString: config.KAFKA_URL,
   ssl: {
@@ -561,13 +595,13 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
           setTimeout(() => {
             mockSubmissionApi.listen(3000)
             const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-            assert.equal(logMessages.length, 9)
+            assert.equal(logMessages.length, 3)
             assert.equal(logMessages[0], `Received ${messageInfo}`)
-            assert.ok(logMessages[7].startsWith(`Failed to handle ${messageInfo}: connect ECONNREFUSED`) ||
-              logMessages[7].startsWith(`Failed to handle ${messageInfo}: getaddrinfo ENOTFOUND`)
+            assert.ok(logMessages[1].startsWith(`Failed to handle ${messageInfo}: connect ECONNREFUSED`) ||
+              logMessages[1].startsWith(`Failed to handle ${messageInfo}: getaddrinfo ENOTFOUND`)
             )
-            assert.ok(logMessages[8].startsWith('{ Error: connect ECONNREFUSED') ||
-              logMessages[8].startsWith('{ Error: getaddrinfo ENOTFOUND')
+            assert.ok(logMessages[2].startsWith('{ Error: connect ECONNREFUSED') ||
+              logMessages[2].startsWith('{ Error: getaddrinfo ENOTFOUND')
             )
             done()
           }, timeout)
@@ -590,10 +624,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       .then((results) => {
         setTimeout(() => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-          assert.equal(logMessages.length, 11)
+          assert.equal(logMessages.length, 13)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.ok(logMessages[6].startsWith('Submission was added with id:'))
-          assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
+          assert.ok(logMessages[8].startsWith('id with key legacySubmissionId has value'))
+          assert.equal(logMessages[12], `Completed handling ${messageInfo}`)
 
           done()
         }, timeout)
@@ -606,10 +640,42 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       .then((results) => {
         setTimeout(() => {
           const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 13)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.ok(logMessages[8].startsWith('id with key legacySubmissionId has value'))
+          assert.equal(logMessages[12], `Completed handling ${messageInfo}`)
+
+          done()
+        }, timeout)
+      })
+  })
+
+  it('should handle final fix message successfully', (done) => {
+    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleFinalFixMessage) } }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
           assert.equal(logMessages.length, 11)
           assert.equal(logMessages[0], `Received ${messageInfo}`)
-          assert.ok(logMessages[6].startsWith('Submission was added with id:'))
+          assert.ok(logMessages[6].startsWith('id with key legacyUploadId has value'))
           assert.equal(logMessages[10], `Completed handling ${messageInfo}`)
+
+          done()
+        }, timeout)
+      })
+  })
+
+  it('should handle update message successfully', (done) => {
+    const m = { topic: config.KAFKA_UPDATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleUpdateMessage) } }
+    producer.send(m)
+      .then((results) => {
+        setTimeout(() => {
+          const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+          assert.equal(logMessages.length, 7)
+          assert.equal(logMessages[0], `Received ${messageInfo}`)
+          assert.ok(logMessages[5].startsWith('Uploaded submission updated legacy submission id'))
+          assert.equal(logMessages[6], `Completed handling ${messageInfo}`)
 
           done()
         }, timeout)

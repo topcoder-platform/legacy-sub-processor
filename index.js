@@ -2,6 +2,7 @@
  * The main entry of the application.
  */
 
+const _ = require('lodash')
 const Promise = require('bluebird')
 const Kafka = require('no-kafka')
 const config = require('config')
@@ -10,6 +11,7 @@ const logger = require('./src/common/logger')
 const NewSubmissionService = require('./src/services/NewSubmissionService')
 const IDGenerator = require('./src/services/IdGenerator')
 const healthcheck = require('topcoder-healthcheck-dropin')
+const m2mAuth = require('tc-core-library-js').auth.m2m
 const Informix = require('informix').Informix
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
@@ -26,6 +28,7 @@ const dbOpts = {
 }
 
 const db = new Informix(dbOpts)
+const m2m = ((config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) ? m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME'])) : null)
 
 /**
  * Handle the messsages from Kafka.
@@ -42,7 +45,7 @@ function handleMessages (messages, topic, partition) {
     logger.debug(`Received ${messageInfo}`)
 
     // Handle the event
-    return NewSubmissionService.handle(messageValue, db, idUploadGen, idSubmissionGen)
+    return NewSubmissionService.handle(messageValue, db, m2m, idUploadGen, idSubmissionGen)
       .then(() => {
         logger.debug(`Completed handling ${messageInfo}`)
 

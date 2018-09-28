@@ -1,11 +1,10 @@
 /**
  * The service to handle new submission events.
  */
+const _ = require('lodash')
 const config = require('config')
 const Axios = require('axios')
 const Joi = require('joi')
-const _ = require('lodash')
-const m2mAuth = require('tc-core-library-js').auth.m2m
 const logger = require('../common/logger')
 const LegacySubmissionIdService = require('./LegacySubmissionIdService')
 
@@ -40,7 +39,7 @@ const axios = Axios.create({
  * Handle new submission message.
  * @param {String} value the message value (JSON string)
  */
-async function handle (value, db, idUploadGen, idSubmissionGen) {
+async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   if (!value) {
     logger.debug('Skipped null or empty event')
     return
@@ -86,8 +85,7 @@ async function handle (value, db, idUploadGen, idSubmissionGen) {
 
   // M2M token necessary for pushing to Bus API
   let apiOptions = null
-  if (config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) {
-    const m2m = m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME']))
+  if (m2m) {
     const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
     apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
   }

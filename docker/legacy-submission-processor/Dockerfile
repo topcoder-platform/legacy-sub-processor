@@ -1,4 +1,4 @@
-FROM ibmcom/informix-innovator-c:latest
+FROM ibmcom/informix-innovator-c:12.10.FC11IE
 
 ARG servername=informix
 

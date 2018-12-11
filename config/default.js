@@ -55,5 +55,9 @@ module.exports = {
 
   AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID,
 
-  AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET
+  AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
+
+  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'https://api.topcoder-dev.com/v4/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
+
+  CHALLENGE_SUBTRACK: process.env.CHALLENGE_SUBTRACK || 'MARATHON_MATCH'
 }

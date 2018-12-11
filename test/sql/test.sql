@@ -1523,3 +1523,41 @@ UPDATE id_sequences SET next_block_start = 60000 WHERE name = 'upload_id_seq';
 UPDATE id_sequences SET next_block_start = 93000 WHERE name = 'submission_id_seq';
 
 alter table upload add url lvarchar(1000);
+
+database common_oltp;
+update id_sequences set next_block_start = 100000 where name = 'project_phase_id_seq';
+update id_sequences set next_block_start = 40005530 where name = 'project_id_seq';
+update id_sequences set next_block_start = 1000 where name = 'prize_id_seq';
+update id_sequences set next_block_start = 2000 where name = 'PROJECT_SPEC_ID_SEQ';
+update id_sequences set next_block_start = 200000 where name = 'resource_id_seq';
+update id_sequences set next_block_start = 5000 where name = 'COMPCATEGORY_SEQ';
+update id_sequences set next_block_start = 3000 where name = 'TECHNOLOGY_SEQ';
+
+
+database corporate_oltp;
+INSERT INTO informix.tc_direct_project (project_id,name,description,project_status_id,user_id, create_date,modify_date) VALUES (
+1247,'Project 3','Project 3 desc',1,132456, current, current);
+
+
+database informixoltp;
+INSERT INTO contest(contest_id, name) VALUES(2001, 'test contest 2001');
+INSERT INTO round(round_id, contest_id, name, round_type_id) VALUES(2001, 2001, 'test round 2001', 13);
+INSERT INTO round_segment(round_id, segment_id, start_time, end_time, status) VALUES(2001, 1, '2018-12-1 12:00:00', '2018-12-6 12:00:00', 'A');
+INSERT INTO round_segment(round_id, segment_id, start_time, end_time, status) VALUES(2001, 5, '2018-12-15 12:00:00', '2018-12-25 12:00:00', 'A');
+
+INSERT INTO problem(problem_id, name) VALUES(2001, 'test problem');
+INSERT INTO component(component_id, problem_id, result_type_id, method_name, class_name) VALUES(2001, 2001, 1, 'test method', 'test class');
+INSERT INTO division(division_id, division_desc) VALUES(100, 'test division');
+INSERT INTO round_component(round_id, component_id, division_id) VALUES(2001, 2001, 100);
+
+INSERT INTO round_registration(round_id, coder_id, timestamp) VALUES(2001, 132458, '2018-12-12 18:10:37');
+INSERT INTO long_component_state(long_component_state_id, round_id, component_id, coder_id) VALUES(3001, 2001, 2001, 132458);
+INSERT INTO long_compilation(long_component_state_id, open_time, language_id) VALUES(3001, 1543719058841, 1);
+
+database tcs_catalog;
+INSERT INTO project(project_id, project_status_id, project_category_id, create_user, create_date, modify_user, modify_date, tc_direct_project_id)
+VALUES(30054163, 1, 37, 132456, current, 132456, current, 1247);
+
+INSERT INTO informix.project_info
+(project_id, project_info_type_id, value, create_user, create_date, modify_user, modify_date)
+VALUES(30054163, 56, 2001, '132456', current, '132456', current);

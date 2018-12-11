@@ -1,18 +1,17 @@
 /**
  * The main entry of the application.
  */
-
+require('./src/bootstrap')
 const _ = require('lodash')
-const Promise = require('bluebird')
 const Kafka = require('no-kafka')
 const config = require('config')
 const util = require('util')
+const healthcheck = require('topcoder-healthcheck-dropin')
+const m2mAuth = require('tc-core-library-js').auth.m2m
 const logger = require('./src/common/logger')
 const NewSubmissionService = require('./src/services/NewSubmissionService')
 const IDGenerator = require('./src/services/IdGenerator')
-const healthcheck = require('topcoder-healthcheck-dropin')
-const m2mAuth = require('tc-core-library-js').auth.m2m
-const Informix = require('informix').Informix
+const Informix = require('./src/services/Informix')
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
 
@@ -31,8 +30,8 @@ const db = new Informix(dbOpts)
 const m2m = ((config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) ? m2mAuth(_.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME'])) : null)
 
 /**
- * Handle the messsages from Kafka.
- * @param {Array<Object>} messsages the messages
+ * Handle the messages from Kafka.
+ * @param {Array<Object>} messages the messages
  * @param {String} topic the topic
  * @param {Number} partition the partition
  * @private
@@ -103,3 +102,12 @@ consumer.init({
     logger.error(util.inspect(err))
     process.exit(1)
   })
+if (process.env.NODE_ENV === 'test') {
+  module.exports = consumer
+}
+if (process.env.NODE_ENV === 'mock') {
+  // start mock server if NODE_ENV = mock
+  const { mockServer } = require('./test/mock-api')
+  mockServer.listen(config.MOCK_SERVER_PORT)
+  console.log(`mock api is listen port ${config.MOCK_SERVER_PORT}`)
+}

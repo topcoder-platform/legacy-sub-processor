@@ -1,7 +1,11 @@
 /**
  * The test configuration.
  */
+const MOCK_SUBMISSION_API_PORT = 3000
+const MOCK_SERVER_PORT = 3001
 module.exports = {
+  MOCK_SUBMISSION_API_PORT,
+  MOCK_SERVER_PORT,
   LOG_LEVEL: 'debug',
 
   // The client group ID for committing and fetching offsets.
@@ -27,7 +31,7 @@ module.exports = {
   KAFKA_NEW_SUBMISSION_ORIGINATOR: 'new-submission-originator',
 
   // The Submission API URL
-  SUBMISSION_API_URL: 'http://localhost:3000',
+  SUBMISSION_API_URL: `http://localhost:${MOCK_SUBMISSION_API_PORT}`,
 
   // The Submission API timeout
   SUBMISSION_TIMEOUT: 2000,
@@ -45,5 +49,9 @@ module.exports = {
   ID_SEQ_UPLOAD: 'upload_id_seq',
 
   // The Informix Submission Table Sequence Name
-  ID_SEQ_SUBMISSION: 'submission_id_seq'
+  ID_SEQ_SUBMISSION: 'submission_id_seq',
+
+  CHALLENGE_INFO_API: `http://localhost:${MOCK_SERVER_PORT}/challenges?filter=id={cid}`, // {cid} gets replaced with challenge id
+
+  CHALLENGE_SUBTRACK: 'MARATHON_MATCH'
 }

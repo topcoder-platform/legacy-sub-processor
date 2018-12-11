@@ -77,7 +77,6 @@ services:
     container_name: mock-submission-api
     volumes:
       - ".:/app"
-      - "PORT=3000"
     command: run mock-submission-api
 
   lsp-app-install:
@@ -98,7 +97,7 @@ services:
     image: lsp-app:latest
     container_name: lsp-app
     environment:
-      - "NODE_ENV=development"
+      - "NODE_ENV=${NODE_ENV:-development}"
       - "PORT=3300"
     volumes:
       - ".:/app"
@@ -150,6 +149,7 @@ services:
       - SUBMISSION_API_URL=${SUBMISSION_API_URL}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - CHALLENGE_INFO_API=${CHALLENGE_INFO_API}
     volumes:
       - ".:/app"
     command: run start:docker
@@ -175,6 +175,7 @@ services:
       - SUBMISSION_API_URL=${SUBMISSION_API_URL}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      - CHALLENGE_INFO_API=${CHALLENGE_INFO_API}
     volumes:
       - ".:/app"
     command: run start:docker

@@ -33,11 +33,17 @@ const CHALLENGE_TYPE = {
   'Studio': 3
 }
 
+const COMPONENT_STATE = {
+  // could add more from https://github.com/appirio-tech/tc1-tcnode/blob/master/tc-common/src/main/java/com/topcoder/web/common/model/algo/ComponentState.java
+  NOT_CHALLENGED: 130 // Submitted
+}
+
 module.exports = {
   SUBMISSION_TYPE,
   SUBMISSION_STATUS,
   UPLOAD_TYPE,
   UPLOAD_STATUS,
   PHASE_TYPE,
-  CHALLENGE_TYPE
+  CHALLENGE_TYPE,
+  COMPONENT_STATE
 }

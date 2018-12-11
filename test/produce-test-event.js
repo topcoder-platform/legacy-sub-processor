@@ -2,13 +2,15 @@
  * The script to send test events to Kafka.
  */
 // Make sure that we don't send test events in production environment by mistake
-process.env.NODE_ENV = 'test'
+// will load same NODE_ENV in docker container and still use test as default
+process.env.NODE_ENV = process.env.NODE_ENV || 'test'
 
 const Kafka = require('no-kafka')
 const config = require('config')
 const _ = require('lodash')
 const util = require('util')
 const logger = require('../src/common/logger')
+const { submissionUrl } = require('./mock-submission-api')
 
 // The good sample message
 const sampleMessage = {
@@ -19,11 +21,29 @@ const sampleMessage = {
   payload: {
     id: 111,
     submissionId: 111,
-    challengeId: 1234,
-    memberId: 4321,
+    challengeId: 30005521,
+    memberId: 124916,
     resource: 'submission',
     url: 'https://topcoder-dev-submissions.s3.amazonaws.com/cfdbc0cf-6437-433e-8af1-c56f317f2afd',
-    type: 'Contest Submission'
+    type: 'Contest Submission',
+    submissionPhaseId: 95245
+  }
+}
+
+const sampleMMMessage = {
+  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 113,
+    challengeId: 30054163,
+    memberId: 132458,
+    resource: 'submission',
+    url: submissionUrl,
+    type: 'Contest Submission',
+    submissionPhaseId: 95308,
+    isExample: 0
   }
 }
 
@@ -83,7 +103,9 @@ const events = [
   },
 
   // Good message
-  { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
+  { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } },
+  // Good mm challenge message
+  { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMMessage) } }
 ]
 
 // Init the producer and send the test events
@@ -100,16 +122,22 @@ const producer = new Kafka.Producer({
 let eventId
 
 if (process.argv.length > 4) {
+  const isMM = process.argv[2] === 'mm'
+  let message = isMM ? sampleMMMessage : sampleMessage
   // custom event
-  sampleMessage.topic = process.argv[2]
-  sampleMessage.payload.challengeId = Number(process.argv[3])
-  sampleMessage.payload.memberId = Number(process.argv[4])
-  sampleMessage.payload.submissionPhaseId = Number(process.argv[5])
+  message.topic = isMM ? config.KAFKA_NEW_SUBMISSION_TOPIC : process.argv[2]
+  message.payload.challengeId = Number(process.argv[3])
+  message.payload.memberId = Number(process.argv[4])
+  message.payload.submissionPhaseId = Number(process.argv[5])
   if (typeof process.argv[6] !== 'undefined') {
-    sampleMessage.payload.legacySubmissionId = process.argv[6]
+    if (isMM) {
+      message.payload.isExample = Number(process.argv[6])
+    } else {
+      message.payload.legacySubmissionId = Number(process.argv[6])
+    }
   }
   eventId = 9
-  events[eventId] = { topic: process.argv[2], message: { value: JSON.stringify(sampleMessage) } }
+  events[eventId] = { topic: message.topic, message: { value: JSON.stringify(message) } }
 } else {
   eventId = Number(process.argv[2])
 }

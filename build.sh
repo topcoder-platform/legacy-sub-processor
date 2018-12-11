@@ -28,6 +28,7 @@ echo "================================"
 echo "tc-informix has created"
 echo "Executing kafka topics"
 echo "================================"
+sleep 15
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
 echo "================================"

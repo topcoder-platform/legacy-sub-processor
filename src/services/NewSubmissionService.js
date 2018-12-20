@@ -124,7 +124,8 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   // attempt to retrieve the subTrack of the challenge
   const subTrack = await getSubTrack(event.payload.challengeId)
   logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-  if (subTrack && subTrack.search(config.CHALLENGE_SUBTRACK) > -1) {
+  const challange_subtracks = config.CHALLENGE_SUBTRACK.split(',')
+  if (subTrack && challange_subtracks.includes(subTrack)) {
     // process mm challenge submission
     await handleMarathonSubmission(Axios, event, db, timestamp)
     logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)

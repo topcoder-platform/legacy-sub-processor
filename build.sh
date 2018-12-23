@@ -28,7 +28,7 @@ echo "================================"
 echo "tc-informix has created"
 echo "Executing kafka topics"
 echo "================================"
-sleep 15
+sleep 5
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
 echo "================================"
@@ -36,7 +36,7 @@ echo "kafka topics has created"
 echo "Copying sql file and setting env"
 echo "================================"
 docker cp test/sql/test.sql iif_innovator_c:/
-sleep 15
+sleep 10
 echo "================================"
 echo "copied sql file "
 echo "setting env"
@@ -46,7 +46,7 @@ echo "================================"
 echo "env set"
 echo "initiating test"
 echo "================================"
-docker-compose -f ecs-docker-compose.yml up lsp-app-test
+docker-compose -f ecs-docker-compose.yml up --build lsp-app-test
 echo "================================"
 echo "test completed"
 echo "================================"

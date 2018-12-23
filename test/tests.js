@@ -874,6 +874,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       submission_points: 0,
       example: 0
     })
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
   })
 
   it('should handle new mm challenge(isExample=1) submission message successfully', async () => {
@@ -930,5 +931,6 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       submission_points: 0,
       example: 1
     })
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
   })
 })

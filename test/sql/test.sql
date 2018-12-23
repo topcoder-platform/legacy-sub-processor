@@ -1561,3 +1561,6 @@ VALUES(30054163, 1, 37, 132456, current, 132456, current, 1247);
 INSERT INTO informix.project_info
 (project_id, project_info_type_id, value, create_user, create_date, modify_user, modify_date)
 VALUES(30054163, 56, 2001, '132456', current, '132456', current);
+INSERT INTO informix.project_info
+(project_id, project_info_type_id, value, create_user, create_date, modify_user, modify_date)
+VALUES(30054163, 28, 'true', '132456', current, '132456', current);

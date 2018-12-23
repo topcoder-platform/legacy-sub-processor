@@ -124,6 +124,8 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     // process mm challenge submission
     await handleMarathonSubmission(Axios, event, db, timestamp)
     logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
+  } else if (subTrack) {
+    logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
   }
 
   // process all challenge submissions

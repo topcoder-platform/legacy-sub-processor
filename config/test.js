@@ -53,5 +53,5 @@ module.exports = {
 
   CHALLENGE_INFO_API: `http://localhost:${MOCK_SERVER_PORT}/challenges?filter=id={cid}`, // {cid} gets replaced with challenge id
 
-  CHALLENGE_SUBTRACK: 'MARATHON_MATCH'
+  CHALLENGE_SUBTRACK: 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
 }

@@ -8,7 +8,7 @@ const config = require('config')
 const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
-const { handleNonMarathonSubmission } = require('./NonMarathonSubmissionService')
+const { handleSubmission } = require('./AllSubmissionService')
 const { handleMarathonSubmission } = require('./MarathonSubmissionService')
 
 // Custom Joi type
@@ -31,12 +31,6 @@ const eventSchema = Joi.object().keys({
     legacySubmissionId: Joi.number().integer().positive().optional(),
     isExample: Joi.number().integer().valid(0, 1).optional()
   }).required().unknown(true)
-})
-
-// Axios instance to make calls to the Submission API
-const axios = Axios.create({
-  baseURL: config.SUBMISSION_API_URL,
-  timeout: config.SUBMISSION_TIMEOUT
 })
 
 /**
@@ -124,16 +118,17 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   // attempt to retrieve the subTrack of the challenge
   const subTrack = await getSubTrack(event.payload.challengeId)
   logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',')
+  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+
   if (subTrack && challangeSubtracks.includes(subTrack)) {
     // process mm challenge submission
     await handleMarathonSubmission(Axios, event, db, timestamp)
     logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-  } else {
-    // process non mm challenge submission
-    await handleNonMarathonSubmission(axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
-    logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
   }
+
+  // process all challenge submissions
+  await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
+  logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
 }
 
 module.exports = {

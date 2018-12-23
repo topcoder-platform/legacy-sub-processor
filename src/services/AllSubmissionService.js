@@ -16,7 +16,13 @@ const logger = require('../common/logger')
  * @param {IDGenerator} idSubmissionGen IDGenerator instance of submission
  * @param {Number} timestamp the timestamp
  */
-module.exports.handleNonMarathonSubmission = async (axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp) => {
+module.exports.handleSubmission = async (Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp) => {
+  // Axios instance to make calls to the Submission API
+  const axios = Axios.create({
+    baseURL: config.SUBMISSION_API_URL,
+    timeout: config.SUBMISSION_TIMEOUT
+  })
+
   // M2M token necessary for pushing to Bus API
   let apiOptions = null
   if (m2m) {

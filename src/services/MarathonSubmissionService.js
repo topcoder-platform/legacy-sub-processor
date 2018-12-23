@@ -17,16 +17,12 @@ module.exports.handleMarathonSubmission = async (axios, event, db, timestamp) =>
   let memberId = _.get(event, 'payload.memberId')
   let isExample = _.get(event, 'payload.isExample', 0)
   let url = _.get(event, 'payload.url')
-  // fetch program codes text using GET text response
-  // avoid parse result as json https://github.com/axios/axios/issues/907
-  let res = await axios.get(url, { responseType: 'text', transformResponse: undefined })
-  let submissionText = res.data
   // only handle new submission topic
   if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
     await LegacySubmissionIdService.addMMSubmission(db, challengeId,
       memberId,
       isExample,
-      submissionText,
+      url,
       timestamp
     )
   }

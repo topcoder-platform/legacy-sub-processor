@@ -23,7 +23,6 @@ const {
   sampleNoChallengePropertiesSubmission,
   sampleLegacyUpdateSubmission,
   submissionUrl,
-  submissionText,
   mockSubmissionApi
 } = require('./mock-submission-api')
 // Start mock server for challenge api and code url
@@ -814,7 +813,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(9)
+    logMessages.length.should.be.greaterThanOrEqual(8)
     should.equal(logMessages[0], `Received ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
     should.ok(logMessages.find(x => x.includes('null or empty result get mm challenge properties')))
@@ -850,7 +849,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     })
     await expectTable('informixoltp:long_submission', 1, {
       submission_number: 1,
-      submission_text: submissionText,
+      submission_text: sampleMMMessage.payload.url,
       submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
       submission_points: 0,
       example: 0
@@ -869,7 +868,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     })
     await expectTable('informixoltp:long_submission', 1, {
       submission_number: 2,
-      submission_text: submissionText,
+      submission_text: sampleMMMessage.payload.url,
       submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
       submission_points: 0,
       example: 0
@@ -904,7 +903,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     })
     await expectTable('informixoltp:long_submission', 1, {
       submission_number: 1,
-      submission_text: submissionText,
+      submission_text: sampleMMMessage.payload.url,
       submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
       submission_points: 0,
       example: 1
@@ -926,7 +925,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     })
     await expectTable('informixoltp:long_submission', 1, {
       submission_number: 2,
-      submission_text: submissionText,
+      submission_text: sampleMMMessage.payload.url,
       submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
       submission_points: 0,
       example: 1

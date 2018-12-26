@@ -9,7 +9,7 @@ const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
 const { handleSubmission } = require('./AllSubmissionService')
-const { handleMarathonSubmission } = require('./MarathonSubmissionService')
+const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
 
 // Custom Joi type
 Joi.id = () => Joi.number().integer().positive().required()
@@ -23,13 +23,18 @@ const eventSchema = Joi.object().keys({
   payload: Joi.object().keys({
     id: Joi.alternatives().try(Joi.id(), Joi.string().uuid()).required(),
     resource: Joi.alternatives().try(Joi.string().valid('submission'), Joi.string().valid('review')),
-    challengeId: Joi.id(),
-    memberId: Joi.id(),
-    submissionPhaseId: Joi.id(),
-    url: Joi.string().uri().required(),
+    challengeId: Joi.id().optional(),
+    memberId: Joi.id().optional(),
+    submissionPhaseId: Joi.id().optional(),
+    url: Joi.string().uri().optional(),
     type: Joi.string().required(),
     legacySubmissionId: Joi.number().integer().positive().optional(),
-    isExample: Joi.number().integer().valid(0, 1).optional()
+    isExample: Joi.number().integer().valid(0, 1).optional(),
+    typeId: Joi.string().optional(),
+    score: Joi.number().min(0).max(100).optional(),
+    metadata: Joi.object().keys({
+      testType: Joi.string().required()
+    }).optional()
   }).required().unknown(true)
 })
 
@@ -108,29 +113,39 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     return
   }
 
-  if (event.payload.resource !== 'submission') {
-    logger.debug(`Skipped event from resource ${event.payload.resource}`)
-    return
+  // for MM Review type
+  if (event.payload.resource && event.payload.resource === 'review') {
+    const payloadTypes = config.PAYLOAD_TYPES.split(',').map(x => x.trim())
+    if (event.payload.typeId && payloadTypes.includes(event.payload.typeId)) {
+      await updateReviewScore(Axios, m2m, event, db)
+    } else {
+      logger.debug(`Skipped Invalid typeId`)
+    }
+  } else {
+    if (event.payload.resource !== 'submission') {
+      logger.debug(`Skipped event from resource ${event.payload.resource}`)
+      return
+    }
+
+    // will convert to Date object by Joi and assume UTC timezone by default
+    const timestamp = validationResult.value.timestamp.getTime()
+    // attempt to retrieve the subTrack of the challenge
+    const subTrack = await getSubTrack(event.payload.challengeId)
+    logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
+    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+
+    if (subTrack && challangeSubtracks.includes(subTrack)) {
+      // process mm challenge submission
+      await handleMarathonSubmission(Axios, event, db, timestamp)
+      logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
+    } else if (subTrack) {
+      logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
+    }
+
+    // process all challenge submissions
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
+    logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
   }
-
-  // will convert to Date object by Joi and assume UTC timezone by default
-  const timestamp = validationResult.value.timestamp.getTime()
-  // attempt to retrieve the subTrack of the challenge
-  const subTrack = await getSubTrack(event.payload.challengeId)
-  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
-
-  if (subTrack && challangeSubtracks.includes(subTrack)) {
-    // process mm challenge submission
-    await handleMarathonSubmission(Axios, event, db, timestamp)
-    logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-  } else if (subTrack) {
-    logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
-  }
-
-  // process all challenge submissions
-  await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
-  logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
 }
 
 module.exports = {

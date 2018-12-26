@@ -137,6 +137,96 @@ const sampleMMMessage = {
   }
 }
 
+// The bad invalid typeId mm review sample message
+const sampleMMReviewInvalidTypeIdMessage = {
+  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 118,
+    resource: 'review',
+    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9787213e',
+    type: 'Contest Submission',
+    score: 90,
+    metadata: {
+      testType: 'provisional',
+      testCases: [
+        'DPK.CP001_A549_24H_X1_B42',
+        'LITMUS.KD017_A549_96H_X1_B42'
+      ]
+    }
+  }
+}
+
+// The bad invalid score mm review sample message
+const sampleMMReviewInvalidScoreMessage = {
+  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 118,
+    resource: 'review',
+    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
+    type: 'Contest Submission',
+    score: -90,
+    metadata: {
+      testType: 'provisional',
+      testCases: [
+        'DPK.CP001_A549_24H_X1_B42',
+        'LITMUS.KD017_A549_96H_X1_B42'
+      ]
+    }
+  }
+}
+
+// The good mm review provisional sample message
+const sampleMMReviewProvisionalMessage = {
+  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 118,
+    resource: 'review',
+    submissionId: 93002,
+    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
+    type: 'Contest Submission',
+    score: 90,
+    metadata: {
+      testType: 'provisional',
+      testCases: [
+        'DPK.CP001_A549_24H_X1_B42',
+        'LITMUS.KD017_A549_96H_X1_B42'
+      ]
+    }
+  }
+}
+
+// The good mm review final sample message
+const sampleMMReviewFinalMessage = {
+  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
+  timestamp: '2018-02-16T00:00:00',
+  'mime-type': 'application/json',
+  payload: {
+    id: 118,
+    resource: 'review',
+    submissionId: 93002,
+    type: 'Contest Submission',
+    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
+    score: 97.5,
+    metadata: {
+      testType: 'final',
+      testCases: [
+        'DPK.CP001_A549_24H_X1_B42',
+        'LITMUS.KD017_A549_96H_X1_B42'
+      ]
+    }
+  }
+}
+
 const options = {
   connectionString: config.KAFKA_URL,
   groupId: config.KAFKA_GROUP_ID,
@@ -186,6 +276,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   ['debug', 'error', 'warn'].forEach((level) => {
     logger[level] = (message) => {
       logMessages.push(message)
+      // logger.info(`Guri has ${message}`)
     }
   })
   /**
@@ -400,7 +491,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
-            resource: 'review'
+            resource: 'review_test'
           }
         }))
       }
@@ -410,7 +501,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     logMessages.length.should.be.greaterThanOrEqual(3)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.equal(logMessages[1], 'Skipped event from resource review')
+    should.equal(logMessages[1], 'Skipped invalid event, reasons: "resource" must be one of [submission], "resource" must be one of [review]')
     should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
@@ -931,5 +1022,49 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       example: 1
     })
     should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
+  })
+
+  it('should skip invalid typeId mm challenge submission', async () => {
+    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewInvalidTypeIdMessage) } }
+    logMessages = []
+    let results = await producer.send(m)
+    await waitJob()
+    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Skipped Invalid typeId')))
+  })
+
+  it('should throw error for invalid score mm challenge submission', async () => {
+    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewInvalidScoreMessage) } }
+    logMessages = []
+    let results = await producer.send(m)
+    await waitJob()
+    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Skipped invalid event, reasons: "score" must be larger than or equal to 0')))
+  })
+
+  it('should handle (review provisional) mm challenge submission message successfully', async () => {
+    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewProvisionalMessage) } }
+    logMessages = []
+    let results = await producer.send(m)
+    await waitJob()
+    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+    logMessages.length.should.be.greaterThanOrEqual(3)
+    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('successfully updated review score')))
+  })
+
+  it('should handle (review final) mm challenge submission message successfully', async () => {
+    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewFinalMessage) } }
+    logMessages = []
+    let results = await producer.send(m)
+    await waitJob()
+    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+    logMessages.length.should.be.greaterThanOrEqual(3)
+    should.equal(logMessages[0], `Received ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('successfully updated review score')))
   })
 })

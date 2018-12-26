@@ -54,6 +54,10 @@ const QUERY_INSERT_LONG_SUBMISSION = `insert into informixoltp:long_submission(l
 const QUERY_UPDATE_LONG_COMPONENT_STATE = `update informixoltp:long_component_state set points =NVL(@points@, points),status_id =@statusId@,
   @numSubmissionsCol@=@numSubmissions@ where long_component_state_id=@componentStateId@`
 
+const QUERY_UPDATE_SUBMISSION_INITIAL_REVIEW_SCORE = `update submission set initial_score=@reviewScore@ where submission_id=@submissionId@`
+
+const QUERY_UPDATE_SUBMISSION_FINAL_REVIEW_SCORE = `update submission set final_score=@reviewScore@ where submission_id=@submissionId@`
+
 // will use example_submission_number if isExample=1 otherwise return submission_number
 const getSubmissionNumberCol = (isExample) => (isExample ? 'example_submission_number' : 'submission_number')
 
@@ -260,6 +264,41 @@ async function addSubmission (informix, challengeId, userId, phaseId, url, submi
 }
 
 /**
+ * Update Review Score for marathon match challenge
+ *
+ * @param {Informix} informix the database
+ * @param {Number} submissionId
+ * @param {Number} reviewScore
+ * @param {Number} testType : provisional or final
+ */
+async function updateReviewScore (informix, submissionId, reviewScore, testType) {
+  logger.debug(`update mm challenge submission review score for submissionId: ${submissionId}
+         reviewScore: ${reviewScore}
+         testType: ${testType}`)
+
+  let ctx = informix.createContext()
+  try {
+    await ctx.begin()
+    let params = {
+      submissionId: submissionId,
+      reviewScore: reviewScore
+    }
+    logger.debug(`update submission with params : ${JSON.stringify(params)}`)
+    if (testType === 'provisional') {
+      await informix.query(ctx, QUERY_UPDATE_SUBMISSION_INITIAL_REVIEW_SCORE, params)
+    } else {
+      await informix.query(ctx, QUERY_UPDATE_SUBMISSION_FINAL_REVIEW_SCORE, params)
+    }
+    logger.debug(`successfully updated review score`)
+  } catch (e) {
+    await ctx.rollback()
+    throw e
+  } finally {
+    await ctx.end()
+  }
+}
+
+/**
  * Update upload url of latest user submission
  * If submission is provided then it will use it
  *
@@ -291,5 +330,6 @@ async function updateUpload (informix, challengeId, userId, phaseId, url, submis
 module.exports = {
   addSubmission,
   addMMSubmission,
+  updateReviewScore,
   updateUpload
 }

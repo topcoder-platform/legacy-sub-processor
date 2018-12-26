@@ -36,6 +36,9 @@ module.exports = {
   // The Submission API timeout
   SUBMISSION_TIMEOUT: 2000,
 
+  // payload.types
+  PAYLOAD_TYPES: process.env.PAYLOAD_TYPES || 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
+
   // The Informix Database Name
   DB_NAME: 'tcs_catalog@informixoltp_tcp',
 

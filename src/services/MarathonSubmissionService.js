@@ -40,6 +40,10 @@ module.exports.updateReviewScore = async (Axios, m2m, event, db) => {
     timeout: config.SUBMISSION_TIMEOUT
   })
 
+  let reviewScore = _.get(event, 'payload.score')
+  let submissionId = _.get(event, 'payload.submissionId')
+  let testType = _.get(event, 'payload.metadata.testType')
+
   // M2M token necessary for pushing to Bus API
   let apiOptions = null
   if (m2m) {
@@ -47,17 +51,14 @@ module.exports.updateReviewScore = async (Axios, m2m, event, db) => {
     apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
   }
 
-  let sub = await axios.get(`/submissions/${event.payload.id}`, apiOptions)
+  let sub = await axios.get(`/submissions/${submissionId}`, apiOptions)
   sub = sub.data
   if (!sub.legacySubmissionId) {
     throw new Error(`legacySubmissionId not found`)
   }
 
-  let submissionId = sub.legacySubmissionId
-  let reviewScore = _.get(event, 'payload.score')
-  let testType = _.get(event, 'payload.metadata.testType')
   // only handle new submission topic
   if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
-    await LegacySubmissionIdService.updateReviewScore(db, submissionId, reviewScore, testType)
+    await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, testType)
   }
 }

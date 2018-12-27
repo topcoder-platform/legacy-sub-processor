@@ -188,11 +188,10 @@ const sampleMMReviewProvisionalMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
-    id: 118,
+    id: 1,
     resource: 'review',
-    submissionId: 93002,
+    submissionId: 118,
     typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
-    type: 'Contest Submission',
     score: 90,
     metadata: {
       testType: 'provisional',
@@ -211,9 +210,9 @@ const sampleMMReviewFinalMessage = {
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json',
   payload: {
-    id: 118,
+    id: 1,
     resource: 'review',
-    submissionId: 93002,
+    submissionId: 118,
     typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
     score: 97.5,
     metadata: {

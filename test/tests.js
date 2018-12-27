@@ -214,7 +214,6 @@ const sampleMMReviewFinalMessage = {
     id: 118,
     resource: 'review',
     submissionId: 93002,
-    type: 'Contest Submission',
     typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
     score: 97.5,
     metadata: {

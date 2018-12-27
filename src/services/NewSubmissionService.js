@@ -27,7 +27,7 @@ const eventSchema = Joi.object().keys({
     memberId: Joi.id().optional(),
     submissionPhaseId: Joi.id().optional(),
     url: Joi.string().uri().optional(),
-    type: Joi.string().required(),
+    type: Joi.string().optional(),
     legacySubmissionId: Joi.number().integer().positive().optional(),
     isExample: Joi.number().integer().valid(0, 1).optional(),
     typeId: Joi.string().optional(),

@@ -129,6 +129,11 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
 
     // will convert to Date object by Joi and assume UTC timezone by default
     const timestamp = validationResult.value.timestamp.getTime()
+
+    // process all challenge submissions
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
+    logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
+
     // attempt to retrieve the subTrack of the challenge
     const subTrack = await getSubTrack(event.payload.challengeId)
     logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
@@ -141,10 +146,6 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     } else if (subTrack) {
       logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
     }
-
-    // process all challenge submissions
-    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
-    logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
   }
 }
 

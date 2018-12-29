@@ -867,7 +867,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(9)
+    logMessages.length.should.be.greaterThanOrEqual(7)
     should.equal(logMessages[0], `Received ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
     should.ok(logMessages.find(x => x.includes('null or empty result get challenge properties')))
@@ -904,6 +904,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     logMessages.length.should.be.greaterThanOrEqual(8)
     should.equal(logMessages[0], `Received ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
     should.ok(logMessages.find(x => x.includes('null or empty result get mm challenge properties')))
   })
@@ -927,6 +928,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     logMessages.length.should.be.greaterThanOrEqual(10)
     should.equal(logMessages[0], `Received ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.ok(logMessages.find(x => x.startsWith('Successful Processing of MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
     await expectTable('informixoltp:long_component_state', 1, {
@@ -962,7 +964,6 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       submission_points: 0,
       example: 0
     })
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
   })
 
   it('should handle new mm challenge(isExample=1) submission message successfully', async () => {
@@ -981,6 +982,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     logMessages.length.should.be.greaterThanOrEqual(10)
     should.equal(logMessages[0], `Received ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.ok(logMessages.find(x => x.startsWith('Successful Processing of MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
     await expectTable('informixoltp:long_component_state', 1, {
@@ -1019,7 +1021,6 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       submission_points: 0,
       example: 1
     })
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
   })
 
   it('should skip invalid typeId mm challenge submission', async () => {

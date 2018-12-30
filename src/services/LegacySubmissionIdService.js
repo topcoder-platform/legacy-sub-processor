@@ -276,26 +276,13 @@ async function updateReviewScore (informix, submissionId, reviewScore, testType)
          reviewScore: ${reviewScore}
          testType: ${testType}`)
 
-  let ctx = informix.createContext()
-  try {
-    await ctx.begin()
-    let params = {
-      submissionId: submissionId,
-      reviewScore: reviewScore
-    }
-    logger.debug(`update submission with params : ${JSON.stringify(params)}`)
-    if (testType === 'provisional') {
-      await informix.query(ctx, QUERY_UPDATE_SUBMISSION_INITIAL_REVIEW_SCORE, params)
-    } else {
-      await informix.query(ctx, QUERY_UPDATE_SUBMISSION_FINAL_REVIEW_SCORE, params)
-    }
-    logger.debug(`successfully updated review score`)
-  } catch (e) {
-    await ctx.rollback()
-    throw e
-  } finally {
-    await ctx.end()
+  let params = {
+    submissionId: submissionId,
+    reviewScore: reviewScore
   }
+  logger.debug(`updated submission score with params : ${JSON.stringify(params)}`)
+  return informix.query((testType === 'provisional' ? QUERY_UPDATE_SUBMISSION_INITIAL_REVIEW_SCORE
+    : QUERY_UPDATE_SUBMISSION_FINAL_REVIEW_SCORE), params)
 }
 
 /**

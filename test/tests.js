@@ -1053,7 +1053,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     logMessages.length.should.be.greaterThanOrEqual(3)
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('successfully updated review score')))
+    should.ok(logMessages.find(x => x.startsWith('updated submission score with params')))
   })
 
   it('should handle (review final) mm challenge submission message successfully', async () => {
@@ -1064,6 +1064,6 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     logMessages.length.should.be.greaterThanOrEqual(3)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('successfully updated review score')))
+    should.ok(logMessages.find(x => x.startsWith('updated submission score with params')))
   })
 })

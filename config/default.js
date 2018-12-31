@@ -32,6 +32,9 @@ module.exports = {
   // The Submission API timeout
   SUBMISSION_TIMEOUT: process.env.SUBMISSION_TIMEOUT || '10000',
 
+  // payload.types
+  PAYLOAD_TYPES: process.env.PAYLOAD_TYPES || 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
+
   // The Informix Database Name
   DB_NAME: process.env.DB_NAME || 'tcs_catalog@informixoltp_tcp',
 
@@ -55,5 +58,9 @@ module.exports = {
 
   AUTH0_CLIENT_ID: process.env.AUTH0_CLIENT_ID,
 
-  AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET
+  AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
+
+  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'https://api.topcoder-dev.com/v4/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
+
+  CHALLENGE_SUBTRACK: process.env.CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
 }

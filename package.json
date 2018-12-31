@@ -6,9 +6,10 @@
   "scripts": {
     "start:docker": "npm --unsafe-perm install && node -r dotenv/config index",
     "test:docker": "npm --unsafe-perm install && npm run test",
+    "clean": "rm -rf node_modules && rm -rf coverage && rm -rf .nyc_output",
     "start": "node index",
-    "lint": "standard --env mocha",
-    "lint:fix": "standard --env mocha --fix",
+    "lint": "standard",
+    "lint:fix": "standard --fix",
     "mock-submission-api": "node test/mock-submission-api",
     "produce-test-event": "node test/produce-test-event",
     "test": "npm run lint && nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
@@ -19,18 +20,31 @@
     "config": "^1.30.0",
     "dotenv": "^6.0.0",
     "http-json-response": "^1.0.1",
-    "informix": "^0.8.0",
+    "informix": "coderReview/node-informix.git#master",
+    "bluebird": "^3.5.3",
     "joi": "^13.4.0",
     "lodash": "^4.17.10",
     "no-kafka": "^3.2.10",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#feature/m2mtoken",
     "topcoder-healthcheck-dropin": "^1.0.2",
-    "winston": "^2.4.2"
+    "winston": "^2.4.2",
+    "flatted": "^2.0.0"
   },
   "devDependencies": {
     "mocha": "^5.2.0",
     "nyc": "^12.0.2",
-    "standard": "^11.0.1"
+    "standard": "^11.0.1",
+    "should": "^13.2.3"
+  },
+  "standard": {
+    "env": [
+      "mocha"
+    ],
+    "ignore": [
+      "docs/*",
+      "docker/*",
+      "coverage/*"
+    ]
   },
   "nyc": {
     "exclude": [

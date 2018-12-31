@@ -1,102 +1,91 @@
 # Topcoder - Submission Legacy Processor Application - Verification
 ------------
 
-## Setup Kafka
+Please check [docs/Validation.md](/docs/Validation.md) and  [docs/Verification_with_DB.md](/docs/Verification_with_DB.md).
 
-- Download Kafka v1.1.0: https://kafka.apache.org/downloads
-- Extract the downloaded file to a directory
-- To enable SSL, copy the following lines to the end of `<your-kafka-directory>/config/server.properties`
+Please note currently you have to verify application with database or please check [docs/Verification_with_DB.md](/docs/Verification_with_DB.md) only.
 
-    ```
-    listeners=plaintext://localhost:9092,ssl://localhost:9093
-    ssl.truststore.location=<absolute-path-to-server.truststore.jks>
-    ssl.truststore.password=test1234
-    ssl.keystore.location=<absolute-path-to-server.keystore.jks>
-    ssl.keystore.password=test1234
-    ssl.key.password=test1234
-    ```
+I would recommend you to verify and test with docker otherwise you need to check related Dockerfile to have better understanding about how to setup environment properly(not recommend).
 
-    Replace `<absolute-path-to-server.truststore.jks>` to the absolute path to the file `tc-submission-legacy-processor/test/kafka-ssl/server.truststore.jks`
-    Replace `<absolute-path-to-server.truststore.jks>` to the absolute path to the file `tc-submission-legacy-processor/test/kafka-ssl/server.keystore.jks`
 
-- Example on my Windows PC:
+## Topcoder - Marathon Match - Legacy Processor
+Please verify under linux or osx and I test under Ubuntu 18.04 and OSX 12 and windows may have issues to verify with docker.
 
-    ```
-    listeners=plaintext://localhost:9092,ssl://localhost:9093
-    ssl.truststore.location=D:/Others/tc-submission-legacy-processor/tc-submission-legacy-processor/test/kafka-ssl/server.truststore.jks
-    ssl.truststore.password=test1234
-    ssl.keystore.location=D:/Others/tc-submission-legacy-processor/tc-submission-legacy-processor/test/kafka-ssl/server.keystore.jks
-    ssl.keystore.password=test1234
-    ssl.key.password=test1234
-    ```
+Please check README.md and ensure you could run tests in docker environment successfully and you can check coverage folder to ensure 
+`src/services/MarathonSubmissionService.js`,`src/services/NonMarathonSubmissionService.js`,`src/services/LegacySubmissionIdService.js` are fully tested.
 
-## Start ZooKeeper
+## Setup data in direct
+Only necessary MM challenge related test data updated in `./test/sql/test.sql` and you can also setup complete test data using direct application.
 
-- `cd <your-kafka-directory>`
-- For Linux: `bin/zookeeper-server-start.sh config/zookeeper.properties`
-- For Windows: `bin\windows\zookeeper-server-start.bat config\zookeeper.properties`
+You can follow [docs/Verification_with_DB.md](/docs/Verification_with_DB.md) to setup MM challenge in direct app, choose Marathon Match under Data menu during creating challenge and create new project with billing account if error to save mm challenge, in last step you have to create as draft challenge,add user as Submitter and get match  submission phase id. 
 
-## Start Kafka
+Currently tc-direct have [issue to save Match Round ID](https://github.com/appirio-tech/direct-app/issues/341) or you may see such logs from command `docker-compose logs tc-direct` if you want to save in page and refresh page.
+```bash 
+         | 07:48:37,097 ERROR [ExceptionMappingInterceptor] Invalid action class configuration that references an unknown class named [saveDraftContestAction]
+tc-direct_1            | java.lang.RuntimeException: Invalid action class configuration that references an unknown class named [saveDraftContestAction]
+```
 
-- `cd <your-kafka-directory>`
-- For Linux: `bin/kafka-server-start.sh config/server.properties`
-- For Windows: `bin\windows\kafka-server-start.bat config/server.properties`
+So you have to run such sql and replace <mm challenge id> with your new created mm challenge id.
+```bash
+database tcs_catalog;
+INSERT INTO informix.project_info
+(project_id, project_info_type_id, value, create_user, create_date, modify_user, modify_date)
+VALUES(<mm challenge id>, 56, 2001, '132456', current, '132456', current);
+```
 
-## Create Test Topics in Kafka
+Even you run sql direct app will still fail to show details page with such error
+```bash 
+ java.lang.NullPointerException
+tc-direct_1            | 	at com.topcoder.direct.services.view.action.analytics.longcontest.MarathonMatchHelper.getMarathonMatchDetails(MarathonMatchHelper.java:115)
+tc-direct_1            | 	at com.topcoder.direct.services.view.action.contest.launch.GetContestAction.executeAction(GetContestAction.java:476)
+tc-direct_1            | 	at com.topcoder.direct.services.view.action.BaseDirectStrutsAction.execute(BaseDirectStrutsAction.java:305)
+tc-direct_1            | 	at sun.reflect.GeneratedMethodAccessor553.invoke(Unknown Source)
 
-- `cd <your-kafka-directory>`
-- For Linux:
-    ```
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic different-topic
-    bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic
-    ```
-- For Windows:
-    ```
-    bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic different-topic
-    bin\windows\kafka-topics.bat --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic new-submission-topic
-    ```
+```
 
-## Run Unit Tests
+Please check https://github.com/appirio-tech/direct-app/blob/dev/src/java/main/com/topcoder/direct/services/view/action/contest/launch/GetContestAction.java#L502
 
-- `cd tc-submission-legacy-processor`
-- `npm i`
-- `npm test`
+Even latest direct codes will comment out related codes to solve this issue so just leave direct page there.
 
-The detailed test coverage report (html) is generated to `./coverage` directory
+## Run Legacy Submission Proc. app
 
-## Manual Verification
+Make sure related services started and test data prepared and start app with `NODE_ENV=mock` to mock challenge api otherwise new created mm challenge will still consider as non mm challenge
+```bash
+export NODE_ENV=mock
+export DB_SERVER_NAME=informix
+docker-compose up lsp-app
+```
 
-### Start the Mock Submission API
+## Send Test data
+From previous data setup I got:
+- challengeId = 40005570
+- memberId = 132458 (user)
+- submissionPhaseId = 100024
 
-- `cd tc-submission-legacy-processor`
-- `npm i`
-- `npm run mock-submission-api`
+Let's send mm submission with example = 0 event to kafka:
 
-### Start the Application in Test Environment
+```bash
+docker exec -ti lsp-app bash -c "npm run produce-test-event mm 40005570 132458 100024 0"
+```
 
-- `cd tc-submission-legacy-processor`
-- For Linux: 
-    ```
-    export NODE_ENV=test
-    npm start
-    ```
-- For Windows: 
-    ```
-    set NODE_ENV=test
-    npm start
-    ```
+Let's send mm submission with example = 1 event to kafka:
 
-### Send Test Events and Verify
+```bash
+docker exec -ti lsp-app bash -c "npm run produce-test-event mm 40005570 132458 100024 1"
+```
 
-- `cd tc-submission-legacy-processor`
-- For Linux: `export NODE_ENV=test`
-- For Windows: `set NODE_ENV=test`
-- Run `npm run produce-test-event 0` and verify that the app doesn't consume this message (no log)
-- Run `npm run produce-test-event 1` and verify that the app skips this message (log: `Skipped null or empty event`)
-- Run `npm run produce-test-event 2` and verify that the app skips this message (log: `Skipped null or empty event`)
-- Run `npm run produce-test-event 3` and verify that the app skips this message (log: `Skipped non well-formed JSON message: ...`)
-- Run `npm run produce-test-event 4` and verify that the app skips this message (log: ` Skipped invalid event, reasons: "topic" is required ...`)
-- Run `npm run produce-test-event 5` and verify that the app skips this message (log: `Skipped invalid event, reasons: "timestamp" must be...`)
-- Run `npm run produce-test-event 6` and verify that the app skips this message (log: `Skipped event from topic wrong-topic`)
-- Run `npm run produce-test-event 7` and verify that the app skips this message (log: `Skipped event from topic wrong-originator`)
-- Run `npm run produce-test-event 8` and verify that the app makes call to the Submission API successfully (log: `Updated to the Submission API: id 111, ...`) and the Mock Submission API receives `PUT /submissions/111` request with request body like `{"id":111,"legacySubmissionId":1531219317896}`. `legacySubmissionId` is current epoch in the current implementation.
+or you can run sample mm submission message directly(valid if run `test/sql/test.sql`)
+```bash
+docker exec -ti lsp-app bash -c "npm run produce-test-event 9"
+```
+
+
+Please note currently processor will call challenge api to check whether challenge is MM challenge and default server api.topcoder-dev.com may not exist mm challenge created in local direct application.
+So when we start app with NODE_ENV=mock it will use mock challenge api configurations and start mock challenge api server.
+
+## Verify Database
+Open your database explorer (**DBeaver** application, for instance). Connect to database informixoltp
+Check table: `long_component_state`, `long_submission` or run below sql
+```bash
+select lcs.status_id,lcs.points, lcs.example_submission_number,lcs.submission_number,ls.*  from informixoltp:long_submission ls, informixoltp:long_component_state lcs where ls.long_component_state_id=lcs.long_component_state_id
+```

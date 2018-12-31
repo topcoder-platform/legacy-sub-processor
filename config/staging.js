@@ -32,6 +32,9 @@ module.exports = {
   // The Submission API timeout
   SUBMISSION_TIMEOUT: process.env.SUBMISSION_TIMEOUT || '10000',
 
+  // payload.types
+  PAYLOAD_TYPES: process.env.PAYLOAD_TYPES || 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
+
   // The Informix Database Name
   DB_NAME: process.env.DB_NAME || 'tcs_catalog@informixoltp_tcp',
 
@@ -45,5 +48,7 @@ module.exports = {
   ID_SEQ_UPLOAD: process.env.ID_SEQ_UPLOAD || 'upload_id_seq',
 
   // The Informix Submission Table Sequence Name
-  ID_SEQ_SUBMISSION: process.env.ID_SEQ_SUBMISSION || 'submission_id_seq'
+  ID_SEQ_SUBMISSION: process.env.ID_SEQ_SUBMISSION || 'submission_id_seq',
+
+  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API
 }

@@ -2,17 +2,7 @@
  * The main entry of the application.
  */
 require('./src/bootstrap')
-const _ = require('lodash')
-const Kafka = require('no-kafka')
-const config = require('config')
-const util = require('util')
-const healthcheck = require('topcoder-healthcheck-dropin')
-const m2mAuth = require('tc-core-library-js').auth.m2m
 const logger = require('./src/common/logger')
-const NewSubmissionService = require('./src/services/NewSubmissionService')
-const IDGenerator = require('./src/services/IdGenerator')
-const Informix = require('./src/services/Informix')
-
 const tracer = require('dd-trace').init({
   logger: {
     debug: message => logger.debug(message),
@@ -20,6 +10,17 @@ const tracer = require('dd-trace').init({
   },
   debug: true
 })
+
+const _ = require('lodash')
+const Kafka = require('no-kafka')
+const config = require('config')
+const util = require('util')
+const healthcheck = require('topcoder-healthcheck-dropin')
+const m2mAuth = require('tc-core-library-js').auth.m2m
+const NewSubmissionService = require('./src/services/NewSubmissionService')
+const IDGenerator = require('./src/services/IdGenerator')
+const Informix = require('./src/services/Informix')
+
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
 

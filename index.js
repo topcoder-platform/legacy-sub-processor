@@ -1,7 +1,6 @@
 /**
  * The main entry of the application.
  */
-require('./src/bootstrap')
 const logger = require('./src/common/logger')
 const tracer = require('dd-trace').init({
   logger: {
@@ -10,6 +9,8 @@ const tracer = require('dd-trace').init({
   },
   debug: true
 })
+require('./src/bootstrap')
+
 
 const _ = require('lodash')
 const Kafka = require('no-kafka')

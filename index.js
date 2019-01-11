@@ -78,15 +78,20 @@ function handleMessages(messages, topic, partition) {
 }
 
 // Initialize the consumer
-const consumer = new Kafka.GroupConsumer({
-  handlerConcurrency: 1,
-  groupId: config.KAFKA_GROUP_ID,
-  connectionString: config.KAFKA_URL,
-  ssl: {
-    cert: config.KAFKA_CLIENT_CERT,
-    key: config.KAFKA_CLIENT_CERT_KEY
-  }
-})
+// const consumer = new Kafka.GroupConsumer({
+//   handlerConcurrency: 1,
+//   groupId: config.KAFKA_GROUP_ID,
+//   connectionString: config.KAFKA_URL,
+//   ssl: {
+//     cert: config.KAFKA_CLIENT_CERT,
+//     key: config.KAFKA_CLIENT_CERT_KEY
+//   }
+// })
+const options = { connectionString: config.KAFKA_URL }
+if (config.KAFKA_CLIENT_CERT && config.KAFKA_CLIENT_CERT_KEY) {
+  options.ssl = { cert: config.KAFKA_CLIENT_CERT, key: config.KAFKA_CLIENT_CERT_KEY }
+}
+const consumer = new Kafka.SimpleConsumer(options)
 
 const idUploadGen = new IDGenerator(db, config.ID_SEQ_UPLOAD)
 const idSubmissionGen = new IDGenerator(db, config.ID_SEQ_SUBMISSION)
@@ -105,17 +110,29 @@ function check() {
 }
 
 // Start to listen from the Kafka topic
-consumer.init({
-    subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC],
-    handler: handleMessages
-  })
+// consumer.init({
+//     subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC],
+//     handler: handleMessages
+//   })
+//   .then(() => {
+//     healthcheck.init([check])
+//   })
+//   .catch(err => {
+//     logger.error(util.inspect(err))
+//     process.exit(1)
+//   })
+consumer
+  .init()
+  // consume configured topics
   .then(() => {
     healthcheck.init([check])
+    const topics = [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC]
+    _.each(topics, (tp) => {
+      consumer.subscribe(tp, { time: Kafka.LATEST_OFFSET }, handleMessages)
+    })
   })
-  .catch(err => {
-    logger.error(util.inspect(err))
-    process.exit(1)
-  })
+  .catch((err) => logger.logFullError(err))
+
 if (process.env.NODE_ENV === 'test') {
   module.exports = consumer
 }

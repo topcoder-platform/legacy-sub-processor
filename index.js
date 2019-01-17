@@ -18,11 +18,9 @@ const config = require('config')
 const util = require('util')
 const healthcheck = require('topcoder-healthcheck-dropin')
 const m2mAuth = require('tc-core-library-js').auth.m2m
-const NewSubmissionService = require('./src/services/NewSubmissionService')
-// const IDGenerator = require('./src/services/IdGenerator')
-// const Informix = require('./src/services/Informix')
-const IDGenerator = require('temp-processor/src/IdGenerator')
-const Informix = require('temp-processor/src/Informix')
+const NewSubmissionService = require('./src/services/SubmissionService')
+const IDGenerator = require('legacy-processor-module/IdGenerator')
+const Informix = require('legacy-processor-module/Informix')
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
 
@@ -78,16 +76,6 @@ function handleMessages(messages, topic, partition) {
   })
 }
 
-// Initialize the consumer
-// const consumer = new Kafka.GroupConsumer({
-//   handlerConcurrency: 1,
-//   groupId: config.KAFKA_GROUP_ID,
-//   connectionString: config.KAFKA_URL,
-//   ssl: {
-//     cert: config.KAFKA_CLIENT_CERT,
-//     key: config.KAFKA_CLIENT_CERT_KEY
-//   }
-// })
 const options = { connectionString: config.KAFKA_URL }
 if (config.KAFKA_CLIENT_CERT && config.KAFKA_CLIENT_CERT_KEY) {
   options.ssl = { cert: config.KAFKA_CLIENT_CERT, key: config.KAFKA_CLIENT_CERT_KEY }
@@ -110,18 +98,6 @@ function check() {
   return connected
 }
 
-// Start to listen from the Kafka topic
-// consumer.init({
-//     subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC],
-//     handler: handleMessages
-//   })
-//   .then(() => {
-//     healthcheck.init([check])
-//   })
-//   .catch(err => {
-//     logger.error(util.inspect(err))
-//     process.exit(1)
-//   })
 consumer
   .init()
   // consume configured topics

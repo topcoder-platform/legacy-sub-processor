@@ -19,9 +19,10 @@ const util = require('util')
 const healthcheck = require('topcoder-healthcheck-dropin')
 const m2mAuth = require('tc-core-library-js').auth.m2m
 const NewSubmissionService = require('./src/services/NewSubmissionService')
-const IDGenerator = require('./src/services/IdGenerator')
-const Informix = require('./src/services/Informix')
-
+// const IDGenerator = require('./src/services/IdGenerator')
+// const Informix = require('./src/services/Informix')
+const IDGenerator = require('temp-processor/src/IdGenerator')
+const Informix = require('temp-processor/src/Informix')
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
 

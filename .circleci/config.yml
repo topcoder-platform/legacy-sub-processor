@@ -60,6 +60,7 @@ workflows:
             branches:
               only:
                 - develop
+                - legacy_only
 
       # Production builds are exectuted only on tagged commits to the
       # master branch.

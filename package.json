@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "async-mutex": "^0.1.3",
+    "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#develop",
     "axios": "^0.18.0",
     "bluebird": "^3.5.3",
     "config": "^1.30.0",

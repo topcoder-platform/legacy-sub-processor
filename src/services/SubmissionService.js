@@ -3,9 +3,7 @@
  */
 const _ = require('lodash')
 const Axios = require('axios')
-const util = require('util')
 const config = require('config')
-const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
 const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
@@ -36,34 +34,6 @@ const eventSchema = Joi.object().keys({
     }).optional()
   }).required().unknown(true)
 })
-
-/**
- * Get the subtrack for a challenge.
- * @param {string} challengeId - The id of the challenge.
- * @returns {string} The subtrack type of the challenge.
- */
-async function getSubTrack (challengeId) {
-  try {
-    // attempt to fetch the subtrack
-    const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', challengeId))
-    // use _.get to avoid access with undefined object
-    return _.get(result.data, 'result.content[0].subTrack')
-  } catch (err) {
-    if (err.response) { // non-2xx response received
-      logger.error(`Challenge Details API Error: ${Flatted.stringify({
-        data: err.response.data,
-        status: err.response.status,
-        headers: err.response.headers
-      }, null, 2)}`)
-    } else if (err.request) { // request sent, no response received
-      // may throw such error Converting circular structure to JSON if use native JSON.stringify
-      // https://github.com/axios/axios/issues/836
-      logger.error(`Challenge Details API Error (request sent, no response): ${Flatted.stringify(err.request, null, 2)}`)
-    } else {
-      logger.error(util.inspect(err))
-    }
-  }
-}
 
 /**
  * Handle new submission message.
@@ -123,7 +93,6 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   // process all challenge submissions
   await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
   logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-
 }
 
 module.exports = {

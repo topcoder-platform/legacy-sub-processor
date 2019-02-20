@@ -4,6 +4,7 @@
 const _ = require('lodash')
 const Axios = require('axios')
 const config = require('config')
+const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
 const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')

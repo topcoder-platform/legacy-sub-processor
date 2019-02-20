@@ -125,9 +125,9 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
 
   // process all challenge submissions
   if (subTrack && challangeSubtracks.includes(subTrack)) {
-    logger.debug(`Found mm in ${JSON.stringify(challangeSubtracks)}`)
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, true)
   } else {
-    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, false)
     logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
   }
 }

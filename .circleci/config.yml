@@ -31,9 +31,15 @@ jobs:
       - save_cache: *save_cache_settings
       - deploy:
           command: |
-            git clone --branch v1.1 https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
+            git clone --branch v1.3 https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
             cp ./../buildscript/master_deploy.sh .
-            ./master_deploy.sh -d ECS -e DEV -t $CIRCLE_SHA1 -s legacyapp
+            cp ./../buildscript/buildenv.sh .
+            cp ./../buildscript/awsconfiguration.sh .
+            ./awsconfiguration.sh DEV
+            source awsenvconf            
+            ./buildenv.sh -e DEV -b dev-legacyapp-deployvar
+            source buildenvvar
+            ./master_deploy.sh -d ECS -e DEV -t $CIRCLE_SHA1 -s dev-legacyapp-appvar
   # Build & Deploy against production backend
   "build-prod":
     <<: *defaults

@@ -9,6 +9,14 @@ install_dependency: &install_dependency
             apk add --no-cache jq py-pip sudo
             sudo pip install awscli --upgrade
             sudo pip install docker-compose
+            
+install_deploysuite: &install_deploysuite
+          name: Installation of install_deploysuite.
+          command: |
+            git clone --branch v1.3 https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
+            cp ./../buildscript/master_deploy.sh .
+            cp ./../buildscript/buildenv.sh .
+            cp ./../buildscript/awsconfiguration.sh .
 
 restore_cache_settings_for_build: &restore_cache_settings_for_build
   key: docker-node-modules-lsp-{{ checksum "package-lock.json" }}
@@ -26,20 +34,26 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: *install_dependency
+      - run: *install_deploysuite
       - restore_cache: *restore_cache_settings_for_build
-      - run: ./build.sh DEV
+      - run: 
+          name: "configuring environment"
+          command: |
+            ./awsconfiguration.sh DEV
+            ./buildenv.sh -e DEV -b dev-legacyapp-buildvar            
+      - run: 
+          name: Installation of install_deploysuite.
+          command: |
+            source buildenvvar
+            ./build.sh DEV
       - save_cache: *save_cache_settings
       - deploy:
-          command: |
-            git clone --branch v1.3 https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
-            cp ./../buildscript/master_deploy.sh .
-            cp ./../buildscript/buildenv.sh .
-            cp ./../buildscript/awsconfiguration.sh .
-            ./awsconfiguration.sh DEV
-            source awsenvconf            
+          command: |            
+            source awsenvconf
             ./buildenv.sh -e DEV -b dev-legacyapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e DEV -t $CIRCLE_SHA1 -s dev-legacyapp-appvar
+            ./master_deploy.sh -d ECS -e DEV -t latest -s dev-legacyapp-appvar -i lsp-app
+            
   # Build & Deploy against production backend
   "build-prod":
     <<: *defaults

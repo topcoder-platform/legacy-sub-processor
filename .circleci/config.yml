@@ -19,6 +19,7 @@ install_deploysuite: &install_deploysuite
             cp ./../buildscript/master_deploy.sh .
             cp ./../buildscript/buildenv.sh .
             cp ./../buildscript/awsconfiguration.sh .
+            echo $DEPLOYDEV
             ./awsconfiguration.sh $DEPLOYDEV
 restore_cache_settings_for_build: &restore_cache_settings_for_build
   key: docker-node-modules-lsp-{{ checksum "package-lock.json" }}

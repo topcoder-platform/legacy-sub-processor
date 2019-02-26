@@ -19,8 +19,7 @@ install_deploysuite: &install_deploysuite
             cp ./../buildscript/master_deploy.sh .
             cp ./../buildscript/buildenv.sh .
             cp ./../buildscript/awsconfiguration.sh .
-            echo $DEPLOYDEV
-            ./awsconfiguration.sh $DEPLOYDEV
+
 restore_cache_settings_for_build: &restore_cache_settings_for_build
   key: docker-node-modules-lsp-{{ checksum "package-lock.json" }}
 
@@ -33,18 +32,20 @@ jobs:
   # Build & Deploy against development backend
   "build-dev":
     <<: *defaults
-    environment :
-      DEPLOYENV: DEV
     steps:
       - checkout
       - setup_remote_docker
       - run: *install_dependency
       - run: *install_deploysuite
-      - restore_cache: *restore_cache_settings_for_build              
+      - restore_cache: *restore_cache_settings_for_build
+      - run: 
+          name: "configuring environment"
+          command: |
+            ./awsconfiguration.sh DEV
+            ./buildenv.sh -e DEV -b dev-legacyapp-buildvar            
       - run: 
           name: Installation of install_deploysuite.
           command: |
-            ./buildenv.sh -e DEV -b dev-legacyapp-buildvar
             source buildenvvar
             ./build.sh DEV
       - save_cache: *save_cache_settings
@@ -70,14 +71,13 @@ jobs:
             git clone --branch v1.1 https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
             cp ./../buildscript/master_deploy.sh .
             ./master_deploy.sh -d ECS -e PROD -t $CIRCLE_SHA1 -s legacyapp
-
 workflows:
   version: 2
   build:
     jobs:
       # Development builds are executed on "develop" branch only.
       - "build-dev":
-          context : org-global
+          context : org-global      
           filters:
             branches:
               only:

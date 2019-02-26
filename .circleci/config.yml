@@ -32,6 +32,8 @@ jobs:
   # Build & Deploy against development backend
   "build-dev":
     <<: *defaults
+    environment :
+      DEPLOYENV: DEV
     steps:
       - checkout
       - setup_remote_docker
@@ -75,8 +77,6 @@ workflows:
       # Development builds are executed on "develop" branch only.
       - "build-dev":
           context : org-global
-          environment :
-            DEPLOYENV: DEV
           filters:
             branches:
               only:

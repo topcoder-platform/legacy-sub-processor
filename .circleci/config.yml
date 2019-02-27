@@ -44,7 +44,7 @@ jobs:
             ./awsconfiguration.sh DEV
             ./buildenv.sh -e DEV -b dev-legacyapp-buildvar            
       - run: 
-          name: Installation of install_deploysuite.
+          name: Building software
           command: |
             source buildenvvar
             ./build.sh DEV
@@ -63,14 +63,26 @@ jobs:
       - checkout
       - setup_remote_docker
       - run: *install_dependency
+      - run: *install_deploysuite      
       - restore_cache: *restore_cache_settings_for_build
-      - run: ./build.sh PROD
+      - run: 
+          name: "configuring environment"
+          command: |
+            ./awsconfiguration.sh PROD
+            ./buildenv.sh -e PROD -b prod-legacyapp-buildvar         
+      - run: 
+          name: Building software
+          command: |
+            source buildenvvar
+            ./build.sh PROD
       - save_cache: *save_cache_settings
       - deploy:
-          command: |
-            git clone --branch v1.1 https://github.com/topcoder-platform/tc-deploy-scripts ../buildscript
-            cp ./../buildscript/master_deploy.sh .
-            ./master_deploy.sh -d ECS -e PROD -t $CIRCLE_SHA1 -s legacyapp
+          command: |            
+            source awsenvconf
+            ./buildenv.sh -e PROD -b prod-legacyapp-deployvar
+            source buildenvvar
+            ./master_deploy.sh -d ECS -e PROD -t latest -s prod-legacyapp-appvar -i lsp-app
+            
 workflows:
   version: 2
   build:
@@ -87,6 +99,7 @@ workflows:
       # Production builds are exectuted only on tagged commits to the
       # master branch.
       - "build-prod":
+          context : org-global      
           filters:
             branches:
               only: master

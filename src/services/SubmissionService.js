@@ -3,7 +3,6 @@
  */
 const _ = require('lodash')
 const Axios = require('axios')
-const util = require('util')
 const config = require('config')
 const Flatted = require('flatted')
 const Joi = require('joi')
@@ -120,10 +119,18 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   // will convert to Date object by Joi and assume UTC timezone by default
   const timestamp = validationResult.value.timestamp.getTime()
 
-  // process all challenge submissions
-  await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
-  logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
+  // attempt to retrieve the subTrack of the challenge
+  const subTrack = await getSubTrack(event.payload.challengeId)
+  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
+  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
 
+  // process all challenge submissions
+  if (subTrack && challangeSubtracks.includes(subTrack)) {
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, true)
+  } else {
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, false)
+    logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
+  }
 }
 
 module.exports = {

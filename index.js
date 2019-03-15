@@ -29,7 +29,7 @@ const dbOpts = {
 
 const db = new Informix(dbOpts)
 const m2m = ((config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) ? m2mAuth(_.pick(config, ['AUTH0_URL',
-  'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME'
+  'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME', 'AUTH0_PROXY_SERVER_URL'
 ])) : null)
 
 /**

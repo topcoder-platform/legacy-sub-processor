@@ -76,3 +76,6 @@ typings/
 .serverless
 
 docker/legacy-submission-processor/informix.tar.gz
+
+*-legacyapp-*.json
+*-global-appvar.json

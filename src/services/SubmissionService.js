@@ -3,13 +3,11 @@
  */
 const _ = require('lodash')
 const Axios = require('axios')
-const util = require('util')
 const config = require('config')
 const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
-const { handleSubmission } = require('./AllSubmissionService')
-const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
+const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
 
 // Custom Joi type
 Joi.id = () => Joi.number().integer().positive().required()
@@ -113,39 +111,25 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     return
   }
 
-  // for MM Review type
-  if (event.payload.resource && event.payload.resource === 'review') {
-    const payloadTypes = config.PAYLOAD_TYPES.split(',').map(x => x.trim())
-    if (event.payload.typeId && payloadTypes.includes(event.payload.typeId)) {
-      await updateReviewScore(Axios, m2m, event, db)
-    } else {
-      logger.debug(`Skipped Invalid typeId`)
-    }
+  if (event.payload.resource !== 'submission') {
+    logger.debug(`Skipped event from resource ${event.payload.resource}`)
+    return
+  }
+
+  // will convert to Date object by Joi and assume UTC timezone by default
+  const timestamp = validationResult.value.timestamp.getTime()
+
+  // attempt to retrieve the subTrack of the challenge
+  const subTrack = await getSubTrack(event.payload.challengeId)
+  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
+  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+
+  // process all challenge submissions
+  if (subTrack && challangeSubtracks.includes(subTrack)) {
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, true)
   } else {
-    if (event.payload.resource !== 'submission') {
-      logger.debug(`Skipped event from resource ${event.payload.resource}`)
-      return
-    }
-
-    // will convert to Date object by Joi and assume UTC timezone by default
-    const timestamp = validationResult.value.timestamp.getTime()
-
-    // process all challenge submissions
-    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, false)
     logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-
-    // attempt to retrieve the subTrack of the challenge
-    const subTrack = await getSubTrack(event.payload.challengeId)
-    logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
-
-    if (subTrack && challangeSubtracks.includes(subTrack)) {
-      // process mm challenge submission
-      await handleMarathonSubmission(Axios, event, db, timestamp)
-      logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-    } else if (subTrack) {
-      logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
-    }
   }
 }
 

@@ -5,14 +5,13 @@ process.env.NODE_ENV = 'test'
 require('../src/bootstrap')
 const path = require('path')
 const fs = require('fs')
-const Joi = require('joi')
 const should = require('should')
 const Kafka = require('no-kafka')
 const config = require('config')
 const _ = require('lodash')
 const sqlParams = require('./test_files/sqlParams')
 const logger = require('../src/common/logger')
-const constant = require('../src/common/constant')
+
 // Start mock submission api
 const {
   sampleSubmission,
@@ -22,12 +21,11 @@ const {
   sampleNotAllowMultipleSubmission,
   sampleNoChallengePropertiesSubmission,
   sampleLegacyUpdateSubmission,
-  submissionUrl,
   mockSubmissionApi
 } = require('./mock-submission-api')
 // Start mock server for challenge api and code url
 const { mockServer } = require('./mock-api')
-const Informix = require('../src/services/Informix')
+const Informix = require('legacy-processor-module/Informix')
 // force to use in this way in test to make sure single instance work properly for same database/username/password
 const informix = new Informix({
   database: config.DB_NAME,
@@ -50,7 +48,7 @@ async function sleep (time) {
 }
 
 // Default timeout
-const timeout = 1000
+const timeout = 2000
 const header = {
   topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
   originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
@@ -113,115 +111,6 @@ const sampleLegacyUpdateMessage = {
   timestamp: '2018-11-11T00:00:00',
   payload: {
     ...sampleLegacyUpdateSubmission
-  }
-}
-
-// The good mm sample message
-// see https://apps.topcoder.com/forums/?module=Thread&threadID=927839&start=0
-// The MM url coming from Kafka will point to the member submission. This will be inserted into the database.
-// isExample come from Kafka message. This will have to be added when Submission API handles MM challenges
-const sampleMMMessage = {
-  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
-  timestamp: '2018-02-16T00:00:00',
-  'mime-type': 'application/json',
-  payload: {
-    id: 113,
-    challengeId: 30054163,
-    memberId: 132458,
-    resource: 'submission',
-    url: submissionUrl,
-    type: 'Contest Submission',
-    submissionPhaseId: 95308,
-    isExample: 0
-  }
-}
-
-// The bad invalid typeId mm review sample message
-const sampleMMReviewInvalidTypeIdMessage = {
-  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
-  timestamp: '2018-02-16T00:00:00',
-  'mime-type': 'application/json',
-  payload: {
-    id: 118,
-    resource: 'review',
-    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9787213e',
-    type: 'Contest Submission',
-    score: 90,
-    metadata: {
-      testType: 'provisional',
-      testCases: [
-        'DPK.CP001_A549_24H_X1_B42',
-        'LITMUS.KD017_A549_96H_X1_B42'
-      ]
-    }
-  }
-}
-
-// The bad invalid score mm review sample message
-const sampleMMReviewInvalidScoreMessage = {
-  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
-  timestamp: '2018-02-16T00:00:00',
-  'mime-type': 'application/json',
-  payload: {
-    id: 118,
-    resource: 'review',
-    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
-    type: 'Contest Submission',
-    score: -90,
-    metadata: {
-      testType: 'provisional',
-      testCases: [
-        'DPK.CP001_A549_24H_X1_B42',
-        'LITMUS.KD017_A549_96H_X1_B42'
-      ]
-    }
-  }
-}
-
-// The good mm review provisional sample message
-const sampleMMReviewProvisionalMessage = {
-  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
-  timestamp: '2018-02-16T00:00:00',
-  'mime-type': 'application/json',
-  payload: {
-    id: 1,
-    resource: 'review',
-    submissionId: 118,
-    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
-    score: 90,
-    metadata: {
-      testType: 'provisional',
-      testCases: [
-        'DPK.CP001_A549_24H_X1_B42',
-        'LITMUS.KD017_A549_96H_X1_B42'
-      ]
-    }
-  }
-}
-
-// The good mm review final sample message
-const sampleMMReviewFinalMessage = {
-  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-  originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
-  timestamp: '2018-02-16T00:00:00',
-  'mime-type': 'application/json',
-  payload: {
-    id: 1,
-    resource: 'review',
-    submissionId: 118,
-    typeId: 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
-    score: 97.5,
-    metadata: {
-      testType: 'final',
-      testCases: [
-        'DPK.CP001_A549_24H_X1_B42',
-        'LITMUS.KD017_A549_96H_X1_B42'
-      ]
-    }
   }
 }
 
@@ -484,6 +373,26 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should skip message with wrong resource value', async () => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          payload: {
+            resource: 'review'
+          }
+        }))
+      }
+    }
+    const results = await producer.send(m)
+    await waitJob()
+    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
+    logMessages.length.should.be.greaterThanOrEqual(3)
+    should.equal(logMessages[0], `Received ${messageInfo}`)
+    should.equal(logMessages[1], 'Skipped event from resource review')
+    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
+  })
+
+  it('should skip message with invalid resource value', async () => {
     const m = {
       topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
       message: {
@@ -773,9 +682,9 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(15)
+    logMessages.length.should.be.greaterThanOrEqual(6)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('id with key legacySubmissionId has value')))
+    should.ok(logMessages.find(x => x.startsWith('PATCH /submissions/111')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
   })
 
@@ -784,9 +693,9 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(15)
+    logMessages.length.should.be.greaterThanOrEqual(6)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('id with key legacySubmissionId has value')))
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
   })
 
@@ -795,9 +704,9 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(13)
+    logMessages.length.should.be.greaterThanOrEqual(6)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('id with key legacyUploadId has value')))
+    should.ok(logMessages.find(x => x.startsWith('{"legacyUploadId":')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
   })
 
@@ -806,9 +715,9 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
+    logMessages.length.should.be.greaterThanOrEqual(4)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Uploaded submission updated legacy submission id')))
+    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
   })
 
@@ -822,9 +731,8 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
+    logMessages.length.should.be.greaterThanOrEqual(4)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Uploaded submission updated legacy submission id')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
     await expectTable('upload', 1, {
       url
@@ -837,7 +745,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
+    logMessages.length.should.be.greaterThanOrEqual(6)
     should.equal(logMessages[0], `Received ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
@@ -849,16 +757,14 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
+    logMessages.length.should.be.greaterThanOrEqual(6)
     should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
     // send second time
     results = await producer.send(m)
     await waitJob()
     messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('delete previous submission')))
   })
 
   it('should handle new submission without challenge properties message successfully', async () => {
@@ -867,7 +773,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(7)
+    logMessages.length.should.be.greaterThanOrEqual(4)
     should.equal(logMessages[0], `Received ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
     should.ok(logMessages.find(x => x.includes('null or empty result get challenge properties')))
@@ -879,191 +785,9 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
+    logMessages.length.should.be.greaterThanOrEqual(6)
     should.equal(logMessages[0], `Received ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
     should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-  })
-
-  it('should handle new mm challenge submission(not found challenge in database) message successfully', async () => {
-    await expectTable('informixoltp:long_component_state', 1, {
-      points: null,
-      status_id: null,
-      submission_number: null,
-      example_submission_number: null,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 0, {
-      example: 0
-    })
-    sampleMMMessage.payload.isExample.should.equal(0)
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMMMessage, { payload: { challengeId: 30054378 } })) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(8)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
-    should.ok(logMessages.find(x => x.includes('null or empty result get mm challenge properties')))
-  })
-
-  it('should handle new mm challenge submission(isExample=0) message successfully', async () => {
-    await expectTable('informixoltp:long_component_state', 1, {
-      points: null,
-      status_id: null,
-      submission_number: null,
-      example_submission_number: null,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 0, {
-      example: 0
-    })
-    sampleMMMessage.payload.isExample.should.equal(0)
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMMessage) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    await expectTable('informixoltp:long_component_state', 1, {
-      points: 0,
-      status_id: constant.COMPONENT_STATE.NOT_CHALLENGED,
-      submission_number: 1,
-      example_submission_number: null,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 1, {
-      submission_number: 1,
-      submission_text: sampleMMMessage.payload.url,
-      submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
-      submission_points: 0,
-      example: 0
-    })
-    // process second time
-    results = await producer.send(m)
-    await waitJob()
-    messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    await expectTable('informixoltp:long_component_state', 1, {
-      points: 0,
-      status_id: constant.COMPONENT_STATE.NOT_CHALLENGED,
-      submission_number: 2,
-      example_submission_number: null,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 1, {
-      submission_number: 2,
-      submission_text: sampleMMMessage.payload.url,
-      submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
-      submission_points: 0,
-      example: 0
-    })
-  })
-
-  it('should handle new mm challenge(isExample=1) submission message successfully', async () => {
-    await expectTable('informixoltp:long_component_state', 1, {
-      points: null,
-      status_id: null,
-      submission_number: null,
-      example_submission_number: null,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 0)
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMMMessage, { payload: { isExample: 1 } })) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(10)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    await expectTable('informixoltp:long_component_state', 1, {
-      points: null,
-      status_id: constant.COMPONENT_STATE.NOT_CHALLENGED,
-      submission_number: null,
-      example_submission_number: 1,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 1, {
-      submission_number: 1,
-      submission_text: sampleMMMessage.payload.url,
-      submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
-      submission_points: 0,
-      example: 1
-    })
-    const points = 2
-    await informix.query(`update informixoltp:long_component_state set points=${points} 
-    where long_component_state_id=${sqlParams['informixoltp:long_component_state'].long_component_state_id}`)
-    // process second time
-    results = await producer.send(m)
-    await waitJob()
-    messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    await expectTable('informixoltp:long_component_state', 1, {
-      points, // no updates for points
-      status_id: constant.COMPONENT_STATE.NOT_CHALLENGED,
-      submission_number: null,
-      example_submission_number: 2,
-      coder_id: sampleMMMessage.payload.memberId
-    })
-    await expectTable('informixoltp:long_submission', 1, {
-      submission_number: 2,
-      submission_text: sampleMMMessage.payload.url,
-      submit_time: Joi.attempt(sampleMMMessage.timestamp, Joi.date()).getTime(),
-      submission_points: 0,
-      example: 1
-    })
-  })
-
-  it('should skip invalid typeId mm challenge submission', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewInvalidTypeIdMessage) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(2)
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Skipped Invalid typeId')))
-  })
-
-  it('should throw error for invalid score mm challenge submission', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewInvalidScoreMessage) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(2)
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('Skipped invalid event, reasons: "score" must be larger than or equal to 0')))
-  })
-
-  it('should handle (review provisional) mm challenge submission message successfully', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewProvisionalMessage) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('updated submission score with params')))
-  })
-
-  it('should handle (review final) mm challenge submission message successfully', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewFinalMessage) } }
-    logMessages = []
-    let results = await producer.send(m)
-    await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('updated submission score with params')))
   })
 })

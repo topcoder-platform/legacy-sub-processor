@@ -104,19 +104,6 @@ const normalSubmission = {
   'filename': 'Photo on 7-30-18 at 11.47 AM #2.jpg'
 }
 
-// The good sample MM update submission
-const sampleLegacyMMSubmission = {
-  id: 118,
-  challengeId: 30005521,
-  memberId: 124916,
-  resource: 'review',
-  typeId: 'bcf2b43b-20df-44d1-afd3-7fc9787213e',
-  type: 'Contest Submission',
-  score: 90,
-  legacySubmissionId: 93002,
-  updated: '2018-02-16T00:00:00'
-}
-
 const responses = {
   '/submissions/111': sampleSubmission,
   '/submissions/112': sampleUpdateSubmission,
@@ -125,7 +112,6 @@ const responses = {
   '/submissions/115': sampleNotAllowMultipleSubmission,
   '/submissions/116': sampleNoChallengePropertiesSubmission,
   '/submissions/117': sampleLegacyUpdateSubmission,
-  '/submissions/118': sampleLegacyMMSubmission,
   '/submissions/cfdbc0cf-6437-433e-8af1-c56f317f2afd': normalSubmission
 }
 const codePath = '/submissionTexts/cfdbc0cf-6437-433e-8af1-c56f317f2afd'
@@ -176,7 +162,6 @@ module.exports = {
   sampleNotAllowMultipleSubmission,
   sampleNoChallengePropertiesSubmission,
   sampleLegacyUpdateSubmission,
-  sampleLegacyMMSubmission,
   mockSubmissionApi,
   submissionUrl: `${config.SUBMISSION_API_URL}${codePath}`,
   submissionText

@@ -2,15 +2,7 @@
  * The main entry of the application.
  */
 const logger = require('./src/common/logger')
-const tracer = require('dd-trace').init({
-  logger: {
-    debug: message => logger.debug(message),
-    error: err => logger.error(err)
-  },
-  debug: true
-})
 require('./src/bootstrap')
-
 
 const _ = require('lodash')
 const Kafka = require('no-kafka')
@@ -18,10 +10,9 @@ const config = require('config')
 const util = require('util')
 const healthcheck = require('topcoder-healthcheck-dropin')
 const m2mAuth = require('tc-core-library-js').auth.m2m
-const NewSubmissionService = require('./src/services/NewSubmissionService')
-const IDGenerator = require('./src/services/IdGenerator')
-const Informix = require('./src/services/Informix')
-
+const NewSubmissionService = require('./src/services/SubmissionService')
+const IDGenerator = require('legacy-processor-module/IdGenerator')
+const Informix = require('legacy-processor-module/Informix')
 
 logger.info(`KAFKA URL - ${config.KAFKA_URL}`)
 
@@ -48,7 +39,7 @@ const m2m = ((config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) ? m2mAuth(_.
  * @param {Number} partition the partition
  * @private
  */
-function handleMessages(messages, topic, partition) {
+function handleMessages (messages, topic, partition) {
   return Promise.each(messages, (m) => {
     const messageValue = m.message.value ? m.message.value.toString('utf8') : null
     const messageInfo = `message from topic ${topic}, partition ${partition}, offset ${m.offset}: ${messageValue}`
@@ -62,8 +53,8 @@ function handleMessages(messages, topic, partition) {
 
         // Commit offset
         return consumer.commitOffset({
-            topic, partition, offset: m.offset
-          })
+          topic, partition, offset: m.offset
+        })
           .catch(err => {
             logger.error(`Failed to commit offset for ${messageInfo}: ${err.message}`)
             logger.error(util.inspect(err))
@@ -77,16 +68,6 @@ function handleMessages(messages, topic, partition) {
   })
 }
 
-// Initialize the consumer
-// const consumer = new Kafka.GroupConsumer({
-//   handlerConcurrency: 1,
-//   groupId: config.KAFKA_GROUP_ID,
-//   connectionString: config.KAFKA_URL,
-//   ssl: {
-//     cert: config.KAFKA_CLIENT_CERT,
-//     key: config.KAFKA_CLIENT_CERT_KEY
-//   }
-// })
 const options = { connectionString: config.KAFKA_URL }
 if (config.KAFKA_CLIENT_CERT && config.KAFKA_CLIENT_CERT_KEY) {
   options.ssl = { cert: config.KAFKA_CLIENT_CERT, key: config.KAFKA_CLIENT_CERT_KEY }
@@ -97,7 +78,7 @@ const idUploadGen = new IDGenerator(db, config.ID_SEQ_UPLOAD)
 const idSubmissionGen = new IDGenerator(db, config.ID_SEQ_SUBMISSION)
 
 // check if there is kafka connection alive
-function check() {
+function check () {
   if (!consumer.client.initialBrokers && !consumer.client.initialBrokers.length) {
     return false
   }
@@ -109,18 +90,6 @@ function check() {
   return connected
 }
 
-// Start to listen from the Kafka topic
-// consumer.init({
-//     subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC],
-//     handler: handleMessages
-//   })
-//   .then(() => {
-//     healthcheck.init([check])
-//   })
-//   .catch(err => {
-//     logger.error(util.inspect(err))
-//     process.exit(1)
-//   })
 consumer
   .init()
   // consume configured topics

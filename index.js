@@ -100,7 +100,7 @@ consumer
       consumer.subscribe(tp, { time: Kafka.LATEST_OFFSET }, handleMessages)
     })
   })
-  .catch((err) => logger.logFullError(err))
+  .catch((err) => logger.error(err))
 
 if (process.env.NODE_ENV === 'test') {
   module.exports = consumer

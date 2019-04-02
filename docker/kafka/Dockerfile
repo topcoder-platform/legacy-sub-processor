@@ -1,6 +1,6 @@
 # Kafka and Zookeeper
 # Based on https://github.com/spotify/docker-kafka
-FROM java:openjdk-8-jre
+FROM openjdk:8u212-jre-stretch
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV SCALA_VERSION 2.12

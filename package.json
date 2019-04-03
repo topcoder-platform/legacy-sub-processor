@@ -30,7 +30,8 @@
     "no-kafka": "^3.2.10",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6",
     "topcoder-healthcheck-dropin": "^1.0.2",
-    "winston": "^2.4.2"
+    "winston": "^2.4.2",
+    "flatted": "^2.0.0"
   },
   "devDependencies": {
     "mocha": "^5.2.0",

@@ -2,7 +2,6 @@
 # Based on https://github.com/spotify/docker-kafka
 FROM openjdk:8u212-jre-stretch
 
-
 ENV DEBIAN_FRONTEND noninteractive
 ENV SCALA_VERSION 2.12
 ENV KAFKA_VERSION 2.1.1

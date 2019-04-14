@@ -1,78 +1,30 @@
 /**
- * The service to handle new submission events.
+ * The service to handle new submission events for non-MM challenge.
  */
-const _ = require('lodash')
-const Axios = require('axios')
 const config = require('config')
-const Flatted = require('flatted')
 const Joi = require('joi')
-const logger = require('../common/logger')
-const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
 
-// Custom Joi type
-Joi.id = () => Joi.number().integer().positive().required()
+const logger = require('legacy-processor-module/common/logger')
+const Schema = require('legacy-processor-module/Schema')
+const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
 
 // The event schema to validate events from Kafka
-const eventSchema = Joi.object().keys({
-  topic: Joi.string().required(),
-  originator: Joi.string().required(),
-  timestamp: Joi.date().required(),
-  'mime-type': Joi.string().required(),
-  payload: Joi.object().keys({
-    id: Joi.alternatives().try(Joi.id(), Joi.string().uuid()).required(),
-    resource: Joi.alternatives().try(Joi.string().valid('submission'), Joi.string().valid('review')),
-    challengeId: Joi.id().optional(),
-    memberId: Joi.id().optional(),
-    submissionPhaseId: Joi.id().optional(),
-    url: Joi.string().uri().optional(),
-    type: Joi.string().optional(),
-    legacySubmissionId: Joi.number().integer().positive().optional(),
-    isExample: Joi.number().integer().valid(0, 1).optional(),
-    typeId: Joi.string().optional(),
-    score: Joi.number().min(0).max(100).optional(),
-    metadata: Joi.object().keys({
-      testType: Joi.string().required()
-    }).optional()
-  }).required().unknown(true)
+const eventSchema = Schema.createEventSchema({
+  id: Joi.sid().required(),
+  resource: Joi.resource(),
+  challengeId: Joi.id().required(),
+  memberId: Joi.id().required(),
+  submissionPhaseId: Joi.id().required(),
+  type: Joi.string().required(),
+  url: Joi.string().uri().optional(),
+  legacySubmissionId: Joi.id().optional()
 })
-
-/**
- * Get the subtrack for a challenge.
- * @param {string} challengeId - The id of the challenge.
- * @returns {string} The subtrack type of the challenge.
- */
-async function getSubTrack (challengeId) {
-  try {
-    // attempt to fetch the subtrack
-    const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', challengeId))
-    // use _.get to avoid access with undefined object
-    return _.get(result.data, 'result.content[0].subTrack')
-  } catch (err) {
-    if (err.response) { // non-2xx response received
-      logger.error(`Challenge Details API Error: ${Flatted.stringify({
-        data: err.response.data,
-        status: err.response.status,
-        headers: err.response.headers
-      }, null, 2)}`)
-    } else if (err.request) { // request sent, no response received
-      // may throw such error Converting circular structure to JSON if use native JSON.stringify
-      // https://github.com/axios/axios/issues/836
-      logger.error(`Challenge Details API Error (request sent, no response): ${Flatted.stringify(err.request, null, 2)}`)
-    } else {
-      logger.error(util.inspect(err))
-    }
-  }
-}
 
 /**
  * Handle new submission message.
  * @param {String} value the message value (JSON string)
- * @param {Object} db the informix database
- * @param {Object} m2m the m2m auth
- * @param {IDGenerator} idUploadGen IDGenerator instance of upload
- * @param {IDGenerator} idSubmissionGen IDGenerator instance of submission
  */
-async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
+async function handle (value) {
   if (!value) {
     logger.debug('Skipped null or empty event')
     return
@@ -93,10 +45,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   }
 
   // Validate event
-  const validationResult = Joi.validate(event, eventSchema, { abortEarly: false, stripUnknown: true })
-  if (validationResult.error) {
-    const validationErrorMessage = _.map(validationResult.error.details, 'message').join(', ')
-    logger.debug(`Skipped invalid event, reasons: ${validationErrorMessage}`)
+  if (!Schema.validateEvent(event, eventSchema)) {
     return
   }
 
@@ -116,21 +65,53 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     return
   }
 
-  // will convert to Date object by Joi and assume UTC timezone by default
-  const timestamp = validationResult.value.timestamp.getTime()
-
-  // attempt to retrieve the subTrack of the challenge
-  const subTrack = await getSubTrack(event.payload.challengeId)
+  // Attempt to retrieve the subTrack of the challenge
+  const subTrack = await LegacySubmissionIdService.getSubTrack(event.payload.challengeId)
   logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
 
-  // process all challenge submissions
-  if (subTrack && challangeSubtracks.includes(subTrack)) {
-    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, true)
-  } else {
-    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp, false)
-    logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
+  const mmChallangeSubtracks = config.MM_CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+
+  // Skip MM challenge submissions
+  if (!subTrack || mmChallangeSubtracks.includes(subTrack)) {
+    logger.debug(`Skipped event for subTrack: ${subTrack}`)
+    return
   }
+
+  if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
+    // Handle new submission
+    const patchObject = await LegacySubmissionIdService.addSubmission(
+      event.payload.id,
+      event.payload.challengeId,
+      event.payload.memberId,
+      event.payload.submissionPhaseId,
+      event.payload.url,
+      event.payload.type
+    )
+
+    logger.debug(`Patched to the Submission API: id ${event.payload.id}, patch: ${JSON.stringify(patchObject)}`)
+  } else if (event.payload.url) {
+    // We only concerns updating url,
+    // while the update event may not be caused by url update
+
+    let legacySubmissionId = event.payload.legacySubmissionId
+    if (!legacySubmissionId) {
+      // In case legacySubmissionId not present, try to get it from submission API
+      const submission = await LegacySubmissionIdService.getSubmission(event.payload.id)
+      legacySubmissionId = submission.legacySubmissionId || 0
+    }
+
+    await LegacySubmissionIdService.updateUpload(
+      event.payload.challengeId,
+      event.payload.memberId,
+      event.payload.submissionPhaseId,
+      event.payload.url,
+      event.payload.type,
+      legacySubmissionId
+    )
+    logger.debug(`Submission url updated, legacy submission id : ${legacySubmissionId} with url ${event.payload.url}`)
+  }
+
+  logger.debug(`Successful Processing of non MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
 }
 
 module.exports = {

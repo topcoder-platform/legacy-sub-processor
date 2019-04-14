@@ -4,14 +4,14 @@
   "description": "Topcoder - Legacy Submission Processor Application",
   "main": "index.js",
   "scripts": {
-    "start:docker": "npm --unsafe-perm install && node -r dotenv/config index",
-    "test:docker": "npm --unsafe-perm install && npm run test",
+    "start:docker": "node -r dotenv/config index",
+    "test:docker": "npm run test",
     "clean": "rm -rf node_modules && rm -rf coverage && rm -rf .nyc_output",
     "start": "node index",
     "lint": "standard",
     "lint:fix": "standard --fix",
-    "mock-submission-api": "node test/mock-submission-api",
-    "produce-test-event": "node test/produce-test-event",
+    "mock-api": "node node_modules/legacy-processor-module/mock/mock-api",
+    "produce-test-event": "node node_modules/legacy-processor-module/test/produce-test-event",
     "test": "npm run lint && nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
   },
   "dependencies": {
@@ -30,8 +30,7 @@
     "no-kafka": "^3.2.10",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6",
     "topcoder-healthcheck-dropin": "^1.0.2",
-    "winston": "^2.4.2",
-    "flatted": "^2.0.0"
+    "winston": "^2.4.2"
   },
   "devDependencies": {
     "mocha": "^5.2.0",
@@ -51,7 +50,6 @@
   },
   "nyc": {
     "exclude": [
-      "src/common/logger.js",
       "test/*.js"
     ]
   }

@@ -12,10 +12,10 @@ module.exports = {
   KAFKA_URL: process.env.KAFKA_URL || 'ssl://kafka-host:9093',
 
   // The client cert, can be (1) the path to the cert file, or (2) the cert content
-  KAFKA_CLIENT_CERT: process.env.KAFKA_CLIENT_CERT || './test/kafka-ssl/client.crt',
+  KAFKA_CLIENT_CERT: process.env.KAFKA_CLIENT_CERT || './docker/kafka/kafka-ssl/client.crt',
 
   // The client cert key, can be (1) the path to the cert key file, or (2) the cert key content
-  KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY || './test/kafka-ssl/client.key',
+  KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY || './docker/kafka/kafka-ssl/client.key',
 
   // The topic from which the app consumes events
   KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission.notification.create',
@@ -27,7 +27,7 @@ module.exports = {
   KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR || 'submission-api',
 
   // The Submission API URL
-  SUBMISSION_API_URL: process.env.SUBMISSION_API_URL || 'http://submission-api-host:3000',
+  SUBMISSION_API_URL: process.env.SUBMISSION_API_URL || 'http://mock-api-host:3000',
 
   // The Submission API timeout
   SUBMISSION_TIMEOUT: process.env.SUBMISSION_TIMEOUT || '10000',
@@ -60,9 +60,9 @@ module.exports = {
 
   AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
 
-  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'https://api.topcoder-dev.com/v4/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
+  AUTH0_PROXY_SERVER_URL: process.env.AUTH0_PROXY_SERVER_URL,
 
-  CHALLENGE_SUBTRACK: process.env.CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH',
- 
-  AUTH0_PROXY_SERVER_URL: process.env.AUTH0_PROXY_SERVER_URL
+  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
+
+  MM_CHALLENGE_SUBTRACK: process.env.MM_CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
 }

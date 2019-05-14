@@ -86,15 +86,15 @@ async function handle(event) {
         event.payload.url,
         event.payload.type
       );
+
+      logger.debug(
+        `Patched to the Submission API: id ${
+          event.payload.id
+        }, patch: ${JSON.stringify(patchObject)}`
+      );
     } catch (error) {
       logger.error(error);
     }
-
-    logger.debug(
-      `Patched to the Submission API: id ${
-        event.payload.id
-      }, patch: ${JSON.stringify(patchObject)}`
-    );
   } else if (event.payload.url) {
     // We only concerns updating url,
     // while the update event may not be caused by url update

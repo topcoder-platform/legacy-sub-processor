@@ -50,9 +50,9 @@ module.exports = {
   // The Informix Submission Table Sequence Name
   ID_SEQ_SUBMISSION: process.env.ID_SEQ_SUBMISSION || 'submission_id_seq',
 
-  AUTH0_URL: process.env.AUTH0_URL, // Auth0 credentials for Submission Service
+  AUTH0_URL: process.env.AUTH0_URL || 'https://topcoder-dev.auth0.com/oauth/token', // Auth0 credentials for Submission Service
 
-  AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE,
+  AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE || 'https://m2m.topcoder-dev.com/',
 
   TOKEN_CACHE_TIME: process.env.TOKEN_CACHE_TIME || '86400000',
 

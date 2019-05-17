@@ -82,7 +82,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   let consumer
   ['debug', 'info', 'error', 'warn'].forEach((level) => {
     logger[level] = (message) => {
-      logMessages.push(message)
+      logMessages.push(message + '')
     }
   })
   /**
@@ -90,11 +90,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
    */
   const waitJob = async () => {
     // will not loop forever for timeout configuration of mocha
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       // sleep at first to ensure consume message
       await sleep(timeout)
       // break if completed handing or failed to handle
-      if (logMessages.find(x => x.includes('Completed handling') || x.includes('Failed to handle'))) {
+      if (logMessages.find(x => x.startsWith('Skipped') || x.startsWith('Successfully processed') || x.startsWith('Failed to handle'))) {
         break
       }
     }
@@ -175,55 +176,57 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: null } }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped null or empty event')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null string value', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: 'null' } }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped null or empty event')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with empty value', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: '' } }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped null or empty event')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with non-well-formed JSON string value', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: 'abc' } }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.equal(logMessages[1], 'Skipped non well-formed JSON message: Unexpected token a in JSON at position 0')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
+    should.equal(logMessages[1], 'Skipped Invalid message JSON')
   })
 
-  it('should skip message with empty JSON string', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: '{}' } }
+  it('should skip message with wrong topic value', async () => {
+    const m = {
+      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      message: {
+        value: JSON.stringify(_.merge({}, sampleMessage, {
+          topic: 'wrong-topic'
+        }))
+      }
+    }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.equal(logMessages[1], 'Skipped invalid event, reasons: "topic" is required, "originator" is required, "timestamp" is required, "mime-type" is required, "payload" is required')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
+    should.equal(logMessages[1], `Skipped the message topic "wrong-topic" doesn't match the Kafka topic ${config.KAFKA_NEW_SUBMISSION_TOPIC}.`)
   })
 
   it('should skip message with invalid timestamp and payload value', async () => {
@@ -245,29 +248,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "timestamp" must be a number of milliseconds or valid date string, "id" must be a positive number, "id" must be a string, "challengeId" must be a number, "memberId" must be a number, "type" must be a string, "url" must be a valid uri')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
-  })
-
-  it('should skip message with wrong topic value', async () => {
-    const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-      message: {
-        value: JSON.stringify(_.merge({}, sampleMessage, {
-          topic: 'wrong-topic'
-        }))
-      }
-    }
-    const results = await producer.send(m)
-    await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.equal(logMessages[1], 'Skipped event from topic wrong-topic')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with wrong originator value', async () => {
@@ -281,11 +265,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped event from originator wrong-originator')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with wrong resource value', async () => {
@@ -301,31 +284,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped event from resource review')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
-  })
-
-  it('should skip message with invalid resource value', async () => {
-    const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
-      message: {
-        value: JSON.stringify(_.merge({}, sampleMessage, {
-          payload: {
-            resource: 'review_test'
-          }
-        }))
-      }
-    }
-    const results = await producer.send(m)
-    await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.equal(logMessages[1], 'Skipped invalid event, reasons: "resource" must be one of [submission], "resource" must be one of [review], "resource" must be one of [reviewSummation]')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null id value', async () => {
@@ -341,11 +303,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "id" must be a number, "id" must be a string')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with zero id value', async () => {
@@ -361,11 +322,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "id" must be a positive number, "id" must be a string')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null challengeId value', async () => {
@@ -381,11 +341,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "challengeId" must be a number')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with zero challengeId value', async () => {
@@ -401,11 +360,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "challengeId" must be a positive number')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null memberId value', async () => {
@@ -421,11 +379,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "memberId" must be a number')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with zero memberId value', async () => {
@@ -441,11 +398,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "memberId" must be a positive number')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null url value', async () => {
@@ -461,11 +417,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "url" must be a string')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with invalid url value', async () => {
@@ -481,11 +436,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "url" must be a valid uri')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null type value', async () => {
@@ -501,11 +455,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "type" must be a string')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with empty type value', async () => {
@@ -521,11 +474,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "type" is not allowed to be empty')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with null submissionPhaseId value', async () => {
@@ -541,11 +493,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionPhaseId" must be a number')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip message with zero submissionPhaseId value', async () => {
@@ -561,35 +512,30 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.equal(logMessages[1], 'Skipped invalid event, reasons: "submissionPhaseId" must be a positive number')
-    should.equal(logMessages[2], `Completed handling ${messageInfo}`)
   })
 
   it('should skip new submission(not found subTrack) message', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMessage, { payload: { challengeId: 60005521 } })) } }
-    logMessages = []
     let results = await producer.send(m)
     await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(5)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('Skipped event for subTrack: ')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
   })
 
   it('should skip new submission of MM challenge message', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMessage, { payload: { challengeId: 30054163 } })) } }
-    logMessages = []
     let results = await producer.send(m)
     await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(5)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('Skipped event for subTrack: DEVELOP_MARATHON_MATCH')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
   })
 
   it('should handle new submission message successfully', async () => {
@@ -598,12 +544,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     let m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(6)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith(`Patched to the Submission API: id ${sampleMessage.payload.id}`)))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith(`Successfully processed non MM message - Patched to the Submission API: id ${sampleMessage.payload.id}`)))
 
     await expectTable('upload', 1, {
       project_id: sampleMessage.payload.challengeId,
@@ -624,6 +568,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
         }))
       }
     }
+    logMessages = []
     await producer.send(m)
     await waitJob()
 
@@ -642,13 +587,11 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleFinalFixMessage) } }
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(6)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith(`Patched to the Submission API: id ${sampleFinalFixMessage.payload.id}`)))
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(3)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith(`Successfully processed non MM message - Patched to the Submission API: id ${sampleFinalFixMessage.payload.id}`)))
     should.ok(logMessages.find(x => x.includes('{"legacyUploadId":')))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
 
     await expectTable('upload', 1, {
       project_id: sampleFinalFixMessage.payload.challengeId,
@@ -663,15 +606,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     await clearSubmissions()
 
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleStudioMessage) } }
-    logMessages = []
     let results = await producer.send(m)
     await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(6)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith(`Patched to the Submission API: id ${sampleStudioMessage.payload.id}`)))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith(`Successfully processed non MM message - Patched to the Submission API: id ${sampleStudioMessage.payload.id}`)))
 
     await expectTable('upload', 1, {
       project_id: sampleStudioMessage.payload.challengeId,
@@ -684,15 +624,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should handle new submission message which not allow multiple submissions successfully', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleNotAllowMultipleMessage) } }
-    logMessages = []
     let results = await producer.send(m)
     await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(6)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith(`Patched to the Submission API: id ${sampleNotAllowMultipleMessage.payload.id}`)))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith(`Successfully processed non MM message - Patched to the Submission API: id ${sampleNotAllowMultipleMessage.payload.id}`)))
 
     await expectTable('upload', 1, {
       project_id: sampleNotAllowMultipleMessage.payload.challengeId,
@@ -704,10 +641,8 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     logMessages = []
     results = await producer.send(m)
     await waitJob()
-    messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    should.ok(logMessages.find(x => x.startsWith(`Patched to the Submission API: id ${sampleNotAllowMultipleMessage.payload.id}`)))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    should.ok(logMessages.find(x => x.startsWith(`Successfully processed non MM message - Patched to the Submission API: id ${sampleNotAllowMultipleMessage.payload.id}`)))
 
     await expectTable('upload', 1, {
       project_id: sampleNotAllowMultipleMessage.payload.challengeId,
@@ -718,13 +653,11 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should log error for new submission without challenge properties', async () => {
     const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleNoChallengePropertiesMessage) } }
-    logMessages = []
     let results = await producer.send(m)
     await waitJob()
-    let messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(4)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
+    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.includes('Error: null or empty result get challenge properties')))
   })
 
@@ -734,14 +667,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const results = await producer.send(m)
     await waitJob()
     await startServer(mockApi, config.MOCK_API_PORT)
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(3)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}: connect ECONNREFUSED`) ||
-      x.startsWith(`Failed to handle ${messageInfo}: getaddrinfo ENOTFOUND`)
-    ))
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('{ Error: connect ECONNREFUSED') || x.startsWith('{ Error: getaddrinfo ENOTFOUND')))
-    should.ok(logMessages.find(x => x.startsWith(`Failed to handle ${messageInfo}`)))
   })
 
   it('should handle update submission message successfully', async () => {
@@ -774,13 +703,11 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     logMessages = []
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(4)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(3)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('no valid submission id')))
-    should.ok(logMessages.find(x => x.startsWith('Submission url updated, legacy submission id : 0')))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Successfully processed non MM message - Submission url updated, legacy submission id : 0')))
 
     await expectTable('upload', 1, {
       project_id: sampleMessage.payload.challengeId,
@@ -817,13 +744,11 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     logMessages = []
     const results = await producer.send(m)
     await waitJob()
-    const messageInfo = `message from topic ${results[0].topic}, partition ${results[0].partition}, offset ${results[0].offset}: ${m.message.value}`
-    logMessages.length.should.be.greaterThanOrEqual(4)
-    should.equal(logMessages[0], `Received ${messageInfo}`)
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    logMessages.length.should.be.greaterThanOrEqual(2)
+    should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.not.exist(logMessages.find(x => x.startsWith('no valid submission id')))
-    should.ok(logMessages.find(x => x.startsWith('Submission url updated, legacy submission id')))
-    should.ok(logMessages.find(x => x.startsWith('Successful Processing of non MM challenge submission message')))
-    should.equal(logMessages[logMessages.length - 1], `Completed handling ${messageInfo}`)
+    should.ok(logMessages.find(x => x.startsWith('Successfully processed non MM message - Submission url updated, legacy submission id')))
 
     await expectTable('upload', 1, {
       project_id: sampleMessage.payload.challengeId,

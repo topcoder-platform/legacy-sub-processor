@@ -8,8 +8,8 @@
     "test:docker": "npm run test",
     "clean": "rm -rf node_modules && rm -rf coverage && rm -rf .nyc_output",
     "start": "node index",
-    "lint": "standard",
-    "lint:fix": "standard --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "mock-api": "node node_modules/legacy-processor-module/mock/mock-api",
     "produce-test-event": "node node_modules/legacy-processor-module/test/produce-test-event",
     "test": "npm run lint && nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
@@ -33,9 +33,9 @@
     "winston": "^2.4.2"
   },
   "devDependencies": {
+    "eslint": "^5.16.0",
     "mocha": "^5.2.0",
     "nyc": "^12.0.2",
-    "standard": "^11.0.1",
     "should": "^13.2.3"
   },
   "standard": {

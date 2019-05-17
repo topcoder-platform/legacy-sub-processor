@@ -82,15 +82,16 @@ docker-compose up lsp-app
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event different-topic"` and verify that the app doesn't consume this message (no log)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event null-message"` and verify that the app skips this message (log: `Skipped null or empty event`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-message"` and verify that the app skips this message (log: `Skipped null or empty event`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-json"` and verify that the app skips this message (log: `Skipped non well-formed JSON message: ...`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-json"` and verify that the app skips this message (log: `Skipped invalid event, reasons: "topic" is required ...`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-json"` and verify that the app skips this message (log: `Skipped Invalid message JSON`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-json"` and verify that the app skips this message (log: `Skipped the message topic "undefined" doesn't match the Kafka topic submission.notification.create`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-payload"` and verify that the app skips this message (log: `Skipped invalid event, reasons: "timestamp" must be...`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-topic"` and verify that the app skips this message (log: `Skipped event from topic wrong-topic`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-topic"` and verify that the app skips this message (log: `Skipped the message topic "wrong-topic" doesn't match the Kafka topic submission.notification.create`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-originator"` and verify that the app skips this message (log: `Skipped event from topic wrong-originator`)
 
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event submission"` and verify that the app makes call to the Submission API successfully (log: `Patched to the Submission API: id 111, patch: {"legacySubmissionId":60000}`) and the Mock API log (`docker logs mock-api`) like `Patch /submissions/111 with {"legacySubmissionId":60000}`.
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event submission"` and verify that the app makes call to the Submission API successfully (log: `Successfully processed non MM message - Patched to the Submission API: id 111, patch: {"legacySubmissionId":60000}`) and the Mock API log (`docker logs mock-api`) like `Patch /submissions/111 with {"legacySubmissionId":60000}`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event final-fix"` and verify that the app has log like `final fix upload, only insert upload`, and it should only insert into `upload` table, but not `submission`/`resource_submission` table.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event not-allow-multiple"` and verify that the app has log like `delete previous submission for challengeId...`.
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event update-url"` and verify that the app has log like `Successfully processed non MM message - Submission url updated...`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event no-challenge-props"` and verify that the app has error log like `Error: null or empty result get challenge properties...`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event mm-submission"` and verify that the app skips this message (log: `Skipped event for subTrack: DEVELOP_MARATHON_MATCH`).
 

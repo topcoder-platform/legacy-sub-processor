@@ -23,8 +23,8 @@ const eventSchema = Schema.createEventSchema({
 });
 
 /**
- * Handle new submission message.
- * @param {String} event the message value (JSON string)
+ * Handle new submission and update submission event.
+ * @param {Object} event the event object
  */
 async function handle(event) {
   if (!event) {
@@ -88,11 +88,12 @@ async function handle(event) {
       );
 
       logger.debug(
-        `Patched to the Submission API: id ${
+        `Successfully processed non MM message - Patched to the Submission API: id ${
           event.payload.id
         }, patch: ${JSON.stringify(patchObject)}`
       );
     } catch (error) {
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
       logger.error(error);
     }
   } else if (event.payload.url) {
@@ -120,23 +121,16 @@ async function handle(event) {
         event.payload.type,
         legacySubmissionId
       );
+      logger.debug(
+        `Successfully processed non MM message - Submission url updated, legacy submission id : ${legacySubmissionId} with url ${
+          event.payload.url
+        }`
+      );
     } catch (error) {
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
       logger.error(error);
     }
-    logger.debug(
-      `Submission url updated, legacy submission id : ${legacySubmissionId} with url ${
-        event.payload.url
-      }`
-    );
   }
-
-  logger.debug(
-    `Successful Processing of non MM challenge submission message: ${JSON.stringify(
-      event,
-      null,
-      2
-    )}`
-  );
 }
 
 module.exports = {

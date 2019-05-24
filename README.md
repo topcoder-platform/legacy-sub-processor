@@ -1,4 +1,4 @@
-# Topcoder - Submission Legacy Processor Application
+# Topcoder - Legacy Submission Processor Application
 ----------------------
 
 ## Requirements
@@ -29,81 +29,14 @@ You can update the configuration file or set values to the corresponding environ
 - `AUTH0_URL` auth0 url
 - `AUTH0_AUDIENCE` auth0 audience
 - `TOKEN_CACHE_TIME` auth0 token cache time
+- `AUTH0_PROXY_SERVER_URL` auth0 proxy server url
 - `AUTH0_CLIENT_ID` auth0 client id
 - `AUTH0_CLIENT_SECRET` auth0 client secret
 - `CHALLENGE_INFO_API` The challenge info api template with {cid} gets replaced with challenge id
-- `CHALLENGE_SUBTRACK` The sub track of marathon match challenge 
+- `MM_CHALLENGE_SUBTRACK` The sub track of marathon match challenge 
 
- `./config/production.js`, `./config/staging.js`, `./config/test.js` will use same configuration variables as `./config/default.js` except `./config/test.js` will have new configurations for test only.
-- `MOCK_SUBMISSION_API_PORT` The mock submission api port
-- `MOCK_SERVER_PORT` The mock server port for challenge api
- 
- `./config/mock.js` will use same configuration variables as `./config/default.js` except
-- `MOCK_SERVER_PORT` The mock server port for challenge api
- 
- `./test/test_files/sqlParams.json` will load necessary sql params used in test, it will only work if you run `./test/sql/test.sql`.
- 
-> NOTE: ALL COMMANDS BELOW EXECUTE UNDER ```<legacy-sub-procecssor>``` directory
+ `./config/production.js`, `./config/staging.js`, `./config/test.js` will use same configuration variables as `./config/default.js` except `./config/test.js` will have new configurations for test only:
+- `MOCK_API_PORT` The mock server port for submission && challenge api
 
-To build the application you must set the `DB_SERVER_NAME` environment variable. This variable holds the database hostname.
-
-## Build Application Docker Image
-We only need to do this once
-```bash
-export DB_SERVER_NAME=informix
-docker-compose build lsp-app
-```
-
-## Run Kafka and Create Topic (if running kafka locally)
-
-Build Kafka image:
-```bash
-docker-compose build kafka
-```
-
-Run Kafka server:
-```bash
-docker-compose up -d kafka
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
-```
-
-## Install App Requirements
-```bash
-export DB_SERVER_NAME=informix
-docker-compose up lsp-app-install
-```
-
-## Deployment
-```bash
-export DB_SERVER_NAME=informix
-docker-compose up lsp-app
-```
-
-## Running Test
-- Make sure you're running a clean database (you can take down tc-informix container and then up it again)
-- Stop `legacy-sub-processor` application if it was running
-- Install test data and you may start service `tc-informix` with command `docker-compose up tc-informix` if not started 
-```bash
-docker cp test/sql/test.sql iif_innovator_c:/
-docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
-```
-- Run kafka container (and create topic if you haven't do this before)
-- Run (you can use  `docker-compose run lsp-app-test` too and it is more suitable for test command)
-```bash
-docker-compose up lsp-app-test
-```
-
-## Docker Build
-
-```bash
-heroku login
-heroku create
-heroku container:push web --arg servername=<DATABASE_SERVER>
-heroku container:release web
-```
-
-## Standard Code Style
-
-- Check code style `npm run lint`
-- Check code style with option to fix the errors `npm run lint:fix`
+## Validation
+Follow the steps in [Validation.md](Validation.md)

@@ -78,13 +78,16 @@ async function handle(event) {
     // Handle new submission
     logger.debug(`Started adding submission for ${event.payload.id}`);
     try {
+      const timestamp = Date.parse(event.payload.created);
       const patchObject = await LegacySubmissionIdService.addSubmission(
         event.payload.id,
         event.payload.challengeId,
         event.payload.memberId,
         event.payload.submissionPhaseId,
         event.payload.url,
-        event.payload.type
+        event.payload.type,
+        timestamp,
+        false
       );
 
       logger.debug(

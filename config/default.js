@@ -35,8 +35,23 @@ module.exports = {
   // payload.types
   PAYLOAD_TYPES: process.env.PAYLOAD_TYPES || 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
 
+  // The Informix db pool size
+  DB_POOL_SIZE: process.env.DB_POOL_SIZE ? Number(process.env.DB_POOL_SIZE) : 10,
+
+  // The Informix Server Name
+  DB_SERVER: process.env.DB_SERVER || 'informixoltp_tcp',
+
   // The Informix Database Name
-  DB_NAME: process.env.DB_NAME || 'tcs_catalog@informixoltp_tcp',
+  DB_NAME: process.env.DB_NAME || 'tcs_catalog',
+
+  // The CommonOLTP Database Name
+  DB_ID_NAME: process.env.DB_ID_NAME || 'common_oltp',
+
+  // The Informix Host
+  DB_HOST: process.env.DB_HOST || 'informix',
+
+  // The Informix Service
+  DB_SERVICE: process.env.DB_SERVICE || 'sqlexec',
 
   // The Informix Database Username
   DB_USERNAME: process.env.DB_USERNAME || 'informix',

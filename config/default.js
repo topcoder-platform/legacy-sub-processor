@@ -4,6 +4,8 @@
 module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
 
+  KAFKA_CONCURRENCY: process.env.KAFKA_CONCURRENCY ? Number(process.env.KAFKA_CONCURRENCY) : 1,
+
   // The client group ID for committing and fetching offsets.
   // All clients sharing the same group ID belong to the same group.
   KAFKA_GROUP_ID: process.env.KAFKA_GROUP_ID || 'tc-submission-legacy-processor',
@@ -80,4 +82,4 @@ module.exports = {
   CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
 
   MM_CHALLENGE_SUBTRACK: process.env.MM_CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
-}
+};

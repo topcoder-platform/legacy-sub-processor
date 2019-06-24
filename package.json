@@ -54,5 +54,8 @@
     "exclude": [
       "test/*.js"
     ]
+  },
+  "engines": {
+    "node": "8.x"
   }
 }

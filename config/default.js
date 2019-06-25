@@ -47,6 +47,8 @@ module.exports = {
 
   DB_PORT: process.env.DB_PORT || '2020',
 
+  DB_PROTOCOL: process.env.DB_PROTOCOL || 'onsoctcp',
+
   DB_LOCALE: process.env.DB_LOCALE || 'en_US.57372',
 
   // The Informix Database Name

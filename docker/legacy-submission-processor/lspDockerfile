@@ -27,7 +27,7 @@ ENV DB_LOCALE=en_US.utf8
 ENV DBDATE Y4MD-
 ENV DBDELIMITER "|"
 
-COPY docker/legacy-mm-processor/esql ${INFORMIXDIR}/bin/
+COPY docker/legacy-submission-processor/esql ${INFORMIXDIR}/bin/
 RUN chmod +x ${INFORMIXDIR}/bin/esql
 RUN echo "informixoltp_tcp        onsoctcp        ${SERVERNAME:-informix}              sqlexec" \
   > ${INFORMIXDIR}/etc/sqlhosts.informixoltp_tcp

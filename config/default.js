@@ -45,6 +45,8 @@ module.exports = {
   // The Informix Server Name
   DB_SERVER: process.env.DB_SERVER || 'informixoltp_tcp',
 
+  DB_PROTOCOL: process.env.DB_PROTOCOL || 'onsoctcp',
+
   // The Informix Database Name
   DB_NAME: process.env.DB_NAME || 'tcs_catalog',
 

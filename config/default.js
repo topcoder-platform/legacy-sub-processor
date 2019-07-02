@@ -4,6 +4,8 @@
 module.exports = {
   LOG_LEVEL: process.env.LOG_LEVEL || 'debug',
 
+  KAFKA_CONCURRENCY: process.env.KAFKA_CONCURRENCY ? Number(process.env.KAFKA_CONCURRENCY) : 1,
+
   // The client group ID for committing and fetching offsets.
   // All clients sharing the same group ID belong to the same group.
   KAFKA_GROUP_ID: process.env.KAFKA_GROUP_ID || 'tc-submission-legacy-processor',
@@ -16,6 +18,8 @@ module.exports = {
 
   // The client cert key, can be (1) the path to the cert key file, or (2) the cert key content
   KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY || './docker/kafka/kafka-ssl/client.key',
+
+  KAFKA_AGGREGATE_SUBMISSION_TOPIC: process.env.KAFKA_AGGREGATE_SUBMISSION_TOPIC || 'submission.notification.aggregate',
 
   // The topic from which the app consumes events
   KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission.notification.create',
@@ -35,8 +39,29 @@ module.exports = {
   // payload.types
   PAYLOAD_TYPES: process.env.PAYLOAD_TYPES || 'bcf2b43b-20df-44d1-afd3-7fc9798dfcae',
 
+  // The Informix db pool size
+  DB_POOL_SIZE: process.env.DB_POOL_SIZE ? Number(process.env.DB_POOL_SIZE) : 10,
+
+  // The Informix Server Name
+  DB_SERVER: process.env.DB_SERVER || 'informixoltp_tcp',
+
+  DB_PORT: process.env.DB_PORT || '2020',
+
+  DB_PROTOCOL: process.env.DB_PROTOCOL || 'onsoctcp',
+
+  DB_LOCALE: process.env.DB_LOCALE || 'en_US.57372',
+
   // The Informix Database Name
-  DB_NAME: process.env.DB_NAME || 'tcs_catalog@informixoltp_tcp',
+  DB_NAME: process.env.DB_NAME || 'tcs_catalog',
+
+  // The CommonOLTP Database Name
+  DB_ID_NAME: process.env.DB_ID_NAME || 'common_oltp',
+
+  // The Informix Host
+  DB_HOST: process.env.DB_HOST || 'informix',
+
+  // The Informix Service
+  DB_SERVICE: process.env.DB_SERVICE || 'sqlexec',
 
   // The Informix Database Username
   DB_USERNAME: process.env.DB_USERNAME || 'informix',
@@ -65,4 +90,4 @@ module.exports = {
   CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
 
   MM_CHALLENGE_SUBTRACK: process.env.MM_CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
-}
+};

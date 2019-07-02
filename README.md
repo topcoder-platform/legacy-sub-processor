@@ -21,12 +21,7 @@ You can update the configuration file or set values to the corresponding environ
 - `KAFKA_UPDATE_SUBMISSION_TOPIC` The update submission topic from which the app consumes events
 - `SUBMISSION_API_URL` The Submission API URL
 - `SUBMISSION_TIMEOUT` The Submission API timeout
-- `DB_POOL_SIZE` Pool size of database server, default to be 10
-- `DB_SERVER` legacy database server, e.g 'informixoltp_tcp'
-- `DB_NAME` legacy database name, e.g 'tcs_catalog'
-- `DB_ID_NAME` legacy CommonOLTP database name, e.g 'common_oltp'
-- `DB_HOST` legacy database host, e.g 'informix'
-- `DB_SERVICE` legacy database service, e.g 'sqlexec'
+- `DB_NAME` legacy database name 'dbname@db_server_name'
 - `DB_USERNAME` database username
 - `DB_PASSWORD` database password
 - `ID_SEQ_UPLOAD` upload database sequence

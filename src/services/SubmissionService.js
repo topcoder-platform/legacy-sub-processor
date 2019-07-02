@@ -1,12 +1,12 @@
 /**
  * The service to handle new submission events for non-MM challenge.
  */
-const config = require('config');
-const Joi = require('joi');
+const config = require("config");
+const Joi = require("joi");
 
-const logger = require('legacy-processor-module/common/logger');
-const Schema = require('legacy-processor-module/Schema');
-const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService');
+const logger = require("legacy-processor-module/common/logger");
+const Schema = require("legacy-processor-module/Schema");
+const LegacySubmissionIdService = require("legacy-processor-module/LegacySubmissionIdService");
 
 // The event schema to validate events from Kafka
 const eventSchema = Schema.createEventSchema({
@@ -28,12 +28,15 @@ const eventSchema = Schema.createEventSchema({
  */
 async function handle(event) {
   if (!event) {
-    logger.debug('Skipped null or empty event');
+    logger.debug("Skipped null or empty event");
     return;
   }
 
   // Check topic and originator
-  if (event.topic !== config.KAFKA_AGGREGATE_SUBMISSION_TOPIC) {
+  if (
+    event.topic !== config.KAFKA_NEW_SUBMISSION_TOPIC &&
+    event.topic !== config.KAFKA_UPDATE_SUBMISSION_TOPIC
+  ) {
     logger.debug(`Skipped event from topic ${event.topic}`);
     return;
   }
@@ -43,7 +46,7 @@ async function handle(event) {
     return;
   }
 
-  if (event.payload.resource !== 'submission') {
+  if (event.payload.resource !== "submission") {
     logger.debug(`Skipped event from resource ${event.payload.resource}`);
     return;
   }
@@ -54,10 +57,16 @@ async function handle(event) {
   }
 
   // Attempt to retrieve the subTrack of the challenge
-  const subTrack = await LegacySubmissionIdService.getSubTrack(event.payload.challengeId);
-  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`);
+  const subTrack = await LegacySubmissionIdService.getSubTrack(
+    event.payload.challengeId
+  );
+  logger.debug(
+    `Challenge ${event.payload.challengeId} get subTrack ${subTrack}`
+  );
 
-  const mmChallangeSubtracks = config.MM_CHALLENGE_SUBTRACK.split(',').map(x => x.trim());
+  const mmChallangeSubtracks = config.MM_CHALLENGE_SUBTRACK.split(",").map(x =>
+    x.trim()
+  );
 
   // Skip MM challenge submissions
   if (!subTrack || mmChallangeSubtracks.includes(subTrack)) {
@@ -65,20 +74,17 @@ async function handle(event) {
     return;
   }
 
-  if (event.payload.originalTopic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
+  if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
     // Handle new submission
     logger.debug(`Started adding submission for ${event.payload.id}`);
     try {
-      const timestamp = Date.parse(event.payload.created);
       const patchObject = await LegacySubmissionIdService.addSubmission(
         event.payload.id,
         event.payload.challengeId,
         event.payload.memberId,
         event.payload.submissionPhaseId,
         event.payload.url,
-        event.payload.type,
-        timestamp,
-        false
+        event.payload.type
       );
 
       logger.debug(
@@ -87,7 +93,7 @@ async function handle(event) {
         }, patch: ${JSON.stringify(patchObject)}`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
       logger.error(error);
     }
   } else if (event.payload.url) {
@@ -97,11 +103,15 @@ async function handle(event) {
     let legacySubmissionId = event.payload.legacySubmissionId;
     if (!legacySubmissionId) {
       // In case legacySubmissionId not present, try to get it from submission API
-      const submission = await LegacySubmissionIdService.getSubmission(event.payload.id);
+      const submission = await LegacySubmissionIdService.getSubmission(
+        event.payload.id
+      );
       legacySubmissionId = submission.legacySubmissionId || 0;
     }
 
-    logger.debug(`Started updating URL for submission for ${legacySubmissionId}`);
+    logger.debug(
+      `Started updating URL for submission for ${legacySubmissionId}`
+    );
     try {
       await LegacySubmissionIdService.updateUpload(
         event.payload.challengeId,
@@ -117,7 +127,7 @@ async function handle(event) {
         }`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
       logger.error(error);
     }
   }

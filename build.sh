@@ -46,7 +46,7 @@ echo "================================"
 echo "env set"
 echo "initiating test"
 echo "================================"
-#docker-compose -f ecs-docker-compose.yml up --build lsp-app-test
+docker-compose -f ecs-docker-compose.yml up --build lsp-app-test
 echo "================================"
 echo "test completed"
 echo "================================"

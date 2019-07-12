@@ -93,6 +93,8 @@ module.exports = {
 
   KAFKA_MESSAGE_ORIGINATOR: process.env.KAFKA_MESSAGE_ORIGINATOR || 'Legacy-Sub-Processor',
 
+  POST_KAFKA_ERROR_ENABLED: process.env.POST_KAFKA_ERROR_ENABLED || true,
+
   CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
 
   MM_CHALLENGE_SUBTRACK: process.env.MM_CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'

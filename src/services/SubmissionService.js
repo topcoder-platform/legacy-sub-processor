@@ -89,6 +89,7 @@ async function handle(event) {
     } catch (error) {
       logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
+      throw error;
     }
   } else if (event.payload.url) {
     // We only concerns updating url,
@@ -119,6 +120,7 @@ async function handle(event) {
     } catch (error) {
       logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
+      throw error;
     }
   }
 }

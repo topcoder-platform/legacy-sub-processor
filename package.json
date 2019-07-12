@@ -25,7 +25,7 @@
     "http-json-response": "^1.0.1",
     "ifxnjs": "^8.0.1",
     "joi": "^13.4.0",
-    "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#develop",
+    "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#master",
     "lodash": "^4.17.10",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.26",

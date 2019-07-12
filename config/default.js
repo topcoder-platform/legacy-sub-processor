@@ -19,6 +19,8 @@ module.exports = {
   // The client cert key, can be (1) the path to the cert key file, or (2) the cert key content
   KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY || './docker/kafka/kafka-ssl/client.key',
 
+  KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC || 'common.error.reporting',
+
   KAFKA_AGGREGATE_SUBMISSION_TOPIC: process.env.KAFKA_AGGREGATE_SUBMISSION_TOPIC || 'submission.notification.aggregate',
 
   // The topic from which the app consumes events
@@ -86,6 +88,10 @@ module.exports = {
   AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
 
   AUTH0_PROXY_SERVER_URL: process.env.AUTH0_PROXY_SERVER_URL,
+
+  BUSAPI_URL: process.env.BUSAPI_URL || 'https://api.topcoder-dev.com/v5',
+
+  KAFKA_MESSAGE_ORIGINATOR: process.env.KAFKA_MESSAGE_ORIGINATOR || 'Legacy-Sub-Processor',
 
   CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
 

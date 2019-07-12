@@ -25,13 +25,15 @@
     "http-json-response": "^1.0.1",
     "ifxnjs": "^8.0.1",
     "joi": "^13.4.0",
-    "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#master",
+    "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#develop",
     "lodash": "^4.17.10",
     "moment": "^2.24.0",
+    "moment-timezone": "^0.5.26",
     "no-kafka": "^3.2.10",
     "q": "^1.5.1",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6",
     "topcoder-healthcheck-dropin": "^1.0.2",
+    "topcoder-error-logger": "topcoder-platform/topcoder-error-logger.git",
     "winston": "^2.4.2"
   },
   "devDependencies": {

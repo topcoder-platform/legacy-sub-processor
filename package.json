@@ -32,8 +32,9 @@
     "no-kafka": "^3.2.10",
     "q": "^1.5.1",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6",
-    "topcoder-healthcheck-dropin": "^1.0.2",
+    "topcoder-bus-api-wrapper": "^1.0.1",
     "topcoder-error-logger": "topcoder-platform/topcoder-error-logger.git",
+    "topcoder-healthcheck-dropin": "^1.0.2",
     "winston": "^2.4.2"
   },
   "devDependencies": {

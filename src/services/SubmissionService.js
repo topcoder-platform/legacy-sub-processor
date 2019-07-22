@@ -54,10 +54,16 @@ async function handle(event) {
   }
 
   // Attempt to retrieve the subTrack of the challenge
-  const subTrack = await LegacySubmissionIdService.getSubTrack(event.payload.challengeId);
-  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`);
+  const subTrack = await LegacySubmissionIdService.getSubTrack(
+    event.payload.challengeId
+  );
+  logger.debug(
+    `Challenge ${event.payload.challengeId} get subTrack ${subTrack}`
+  );
 
-  const mmChallangeSubtracks = config.MM_CHALLENGE_SUBTRACK.split(',').map(x => x.trim());
+  const mmChallangeSubtracks = config.MM_CHALLENGE_SUBTRACK.split(',').map(x =>
+    x.trim()
+  );
 
   // Skip MM challenge submissions
   if (!subTrack || mmChallangeSubtracks.includes(subTrack)) {
@@ -87,7 +93,9 @@ async function handle(event) {
         }, patch: ${JSON.stringify(patchObject)}`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
       throw error;
     }
@@ -98,11 +106,15 @@ async function handle(event) {
     let legacySubmissionId = event.payload.legacySubmissionId;
     if (!legacySubmissionId) {
       // In case legacySubmissionId not present, try to get it from submission API
-      const submission = await LegacySubmissionIdService.getSubmission(event.payload.id);
+      const submission = await LegacySubmissionIdService.getSubmission(
+        event.payload.id
+      );
       legacySubmissionId = submission.legacySubmissionId || 0;
     }
 
-    logger.debug(`Started updating URL for submission for ${legacySubmissionId}`);
+    logger.debug(
+      `Started updating URL for submission for ${legacySubmissionId}`
+    );
     try {
       await LegacySubmissionIdService.updateUpload(
         event.payload.challengeId,
@@ -118,7 +130,9 @@ async function handle(event) {
         }`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
       throw error;
     }

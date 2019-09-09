@@ -1,6 +1,8 @@
-# Topcoder - Legacy Submission Processor Application - Verification
+# Topcoder - Legacy Submission Processor Application - Validation
 ------------
-> NOTE: ALL COMMANDS BELOW EXECUTE UNDER ```<legacy-sub-procecssor>``` directory
+> NOTE: ALL COMMANDS BELOW EXECUTE UNDER ```<legacy-sub-processor>``` directory
+
+> Ignore any warnings about variables not being set
 
 ## Run Kafka and Create Topic
 
@@ -12,8 +14,7 @@ docker-compose build kafka
 Run Kafka server:
 ```bash
 docker-compose up -d kafka
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.aggregate"
 ```
 
 ## Run Informix and Insert Test Data
@@ -27,7 +28,7 @@ docker rm iif_innovator_c
 docker-compose up -d tc-informix
 
 docker logs iif_innovator_c
-# When you see log like following then informix is started:
+# When you see log like following then informix is started (wait till these logs appear before proceeding further):
 # starting rest listener on port 27018
 # starting mongo listener on port 27017
 ```
@@ -66,26 +67,38 @@ cp -rf <path/to/legacy-processor-module> ./node_modules
 
 ## Run Unit Tests
 - Stop `legacy-sub-processor` application if it was running: `docker stop lsp-app`
-- Make sure kafka container running with topic created and informix container running with test data inserted
+- Make sure kafka container running with topic created and informix container running with test data inserted. If not, follow steps in `Run Informix and Insert Test Data`
 - Run unit tests:
 ```bash
 docker-compose run lsp-app-test
 ```
 
-## Verify with Test Data
-Deploy first:
+## Start legacy-sub-processor
+
 ```bash
 export DB_SERVER_NAME=informix
 docker-compose up lsp-app
 ```
 
+## Validating APM traces
+
+After each test above in `Run Unit Tests` or after scenario listed below in `Verify with Test Data` you will see traces captured on the dashboards of datadog, lightstep and signalfx.
+
+On DataDog, click on APM -> Trace list -> View the traces with type "Custom".
+
+On LightStep, click on explorer -> select your service (component name) -> click Run
+
+On SignalFX, click uAPM -> Traces
+
+## Verify with Test Data
+
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event different-topic"` and verify that the app doesn't consume this message (no log)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event null-message"` and verify that the app skips this message (log: `Skipped null or empty event`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-message"` and verify that the app skips this message (log: `Skipped null or empty event`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-json"` and verify that the app skips this message (log: `Skipped Invalid message JSON`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-json"` and verify that the app skips this message (log: `Skipped the message topic "undefined" doesn't match the Kafka topic submission.notification.create`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-json"` and verify that the app skips this message (log: `Skipped the message topic "undefined" doesn't match the Kafka topic submission.notification.aggregate`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-payload"` and verify that the app skips this message (log: `Skipped invalid event, reasons: "timestamp" must be...`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-topic"` and verify that the app skips this message (log: `Skipped the message topic "wrong-topic" doesn't match the Kafka topic submission.notification.create`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-topic"` and verify that the app skips this message (log: `Skipped the message topic "wrong-topic" doesn't match the Kafka topic submission.notification.aggregate`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-originator"` and verify that the app skips this message (log: `Skipped event from topic wrong-originator`)
 
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event submission"` and verify that the app makes call to the Submission API successfully (log: `Successfully processed non MM message - Patched to the Submission API: id 111, patch: {"legacySubmissionId":60000}`) and the Mock API log (`docker logs mock-api`) like `Patch /submissions/111 with {"legacySubmissionId":60000}`.

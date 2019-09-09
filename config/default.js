@@ -21,9 +21,10 @@ module.exports = {
 
   KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC || 'common.error.reporting',
 
+  // The topic from which the app consumes events
   KAFKA_AGGREGATE_SUBMISSION_TOPIC: process.env.KAFKA_AGGREGATE_SUBMISSION_TOPIC || 'submission.notification.aggregate',
 
-  // The topic from which the app consumes events
+  // The new submission topic
   KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC || 'submission.notification.create',
 
   // topic for update event
@@ -47,7 +48,7 @@ module.exports = {
   // The Informix Server Name
   DB_SERVER: process.env.DB_SERVER || 'informixoltp_tcp',
 
-  DB_PORT: process.env.DB_PORT || '2020',
+  DB_PORT: process.env.DB_PORT || '2021',
 
   DB_PROTOCOL: process.env.DB_PROTOCOL || 'onsoctcp',
 
@@ -99,5 +100,29 @@ module.exports = {
 
   CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
 
-  MM_CHALLENGE_SUBTRACK: process.env.MM_CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
-};
+  MM_CHALLENGE_SUBTRACK: process.env.MM_CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH',
+
+  // Configuration options for APM tracing
+  tracing: {
+    dataDogEnabled: process.env.DATADOG_ENABLED ? process.env.DATADOG_ENABLED === 'true' : true, // Enable/Disable Datadog
+    lightStepEnabled: process.env.LIGHTSTEP_ENABLED ? process.env.LIGHTSTEP_ENABLED === 'true' : true, // Enable/Disable LightStep
+    signalFXEnabled: process.env.SIGNALFX_ENABLED ? process.env.SIGNALFX_ENABLED === 'true' : false, // Enable/Disable SignalFx
+
+    dataDog: { // Datadog configuration
+      service: process.env.DATADOG_SERVICE_NAME || 'tc-legacy-sub-processor', // name of the service
+      hostname: process.env.DD_TRACE_AGENT_HOSTNAME || 'host.docker.internal', // IP hostname where the agent is running. The value of this might be different based on your OS. For MAC and Windows hosts (where datadog agent is running), by default, the server runs inside docker and trace agent on localhost, so we set default hostname to 'host.docker.internal' so that the server can log traces from docker to localhost:8126
+      port: process.env.DATADOG_PORT || 8126 // The port number of the datadog agent
+    },
+
+    lightStep: { // LightStep configuration
+      access_token: process.env.LIGHTSTEP_ACCESS_TOKEN, // LightStep access token
+      component_name: process.env.LIGHTSTEP_COMPONENT_NAME || 'tc-legacy-sub-processor' // Compenent name
+    },
+
+    signalFX: { // SignalFx configuration
+      service: process.env.SIGNALFX_SERVICE_NAME || 'tc-legacy-sub-processor', // Name of the service
+      accessToken: process.env.SIGNALFX_ACCESS_TOKEN, // SignalFx access token
+      url: `http://${process.env.SIGNALFX_TRACE_AGENT_HOSTNAME}:9080/v1/trace` // SignalFx SmartAgent url
+    }
+  }
+}

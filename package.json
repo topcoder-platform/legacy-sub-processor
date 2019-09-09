@@ -8,29 +8,31 @@
     "test:docker": "npm run test",
     "clean": "rm -rf node_modules && rm -rf coverage && rm -rf .nyc_output",
     "start": "node index",
-    "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
+    "lint": "standard",
+    "lint:fix": "standard --fix",
     "mock-api": "node node_modules/legacy-processor-module/mock/mock-api",
     "produce-test-event": "node node_modules/legacy-processor-module/test/produce-test-event",
     "test": "npm run lint && nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
   },
   "dependencies": {
     "async-mutex": "^0.1.3",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "bluebird": "^3.5.3",
     "config": "^1.30.0",
-    "dd-trace": "^0.7.2",
+    "dd-trace": "^0.7.3",
     "dotenv": "^6.0.0",
     "flatted": "^2.0.0",
     "http-json-response": "^1.0.1",
     "ifxnjs": "^8.0.1",
     "joi": "^13.4.0",
     "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#master",
+    "lightstep-tracer": "^0.22.1",
     "lodash": "^4.17.14",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.26",
     "no-kafka": "^3.2.10",
     "q": "^1.5.1",
+    "signalfx-tracing": "^0.2.2",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6",
     "topcoder-bus-api-wrapper": "^1.0.1",
     "topcoder-error-logger": "topcoder-platform/topcoder-error-logger.git",
@@ -38,10 +40,10 @@
     "winston": "^2.4.2"
   },
   "devDependencies": {
-    "eslint": "^5.16.0",
     "mocha": "^5.2.0",
-    "nyc": "^12.0.2",
-    "should": "^13.2.3"
+    "nyc": "^14.1.1",
+    "should": "^13.2.3",
+    "standard": "^14.1.0"
   },
   "standard": {
     "env": [

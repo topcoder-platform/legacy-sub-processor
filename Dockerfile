@@ -25,7 +25,7 @@ RUN echo "informixoltp_tcp        onsoctcp        $SERVERNAME               sqle
 
 USER app
 
-ENV INFORMIXDIR /opt/ibm/informix
+ENV INFORMIXDIR /opt/IBM/informix
 ENV INFORMIXSERVER informixoltp_tcp
 ENV INFORMIXTERM terminfo
 ENV CLIENT_LOCALE en_US.utf8

@@ -5,6 +5,10 @@
 
 - Docker Engine >= 17.x
 - Docker-compose >= 1.17
+- Node.js >= v10.14.2
+- DataDog
+- LightStep
+- SignalFX
 
 ## Configuration
 
@@ -39,9 +43,105 @@ You can update the configuration file or set values to the corresponding environ
 - `AUTH0_CLIENT_SECRET` auth0 client secret
 - `CHALLENGE_INFO_API` The challenge info api template with {cid} gets replaced with challenge id
 - `MM_CHALLENGE_SUBTRACK` The sub track of marathon match challenge 
+- `tracing` Configuration options related to APM tracing
+    - `dataDogEnabled` Enable/Disable Datadog
+    - `lightStepEnabled` Enable/Disable LightStep
+    - `signalFXEnabled` Enable/Disable SignalFx
+    - `dataDog` Configuration options related to Datadog setup
+        - `service` Name of the service
+        - `hostname` IP hostname where the agent is running. 
+            The value of this might be different based on your OS. 
+            For MAC and Windows hosts (where datadog agent is running), by default, the server runs inside docker and trace agent on localhost, so we set default hostname to 'host.docker.internal' so that the server can log traces from docker to localhost:8126
+        - `port` The port number of the datadog agent
+    - `lightStep` Configuration options related to Lightstep setup
+        - `access_token` LightStep access token
+        - `component_name` Name of the component
+    - `signalFX` Configuration options related to SignalFx setup
+        - `service` Name of the service
+        - `accessToken` SignalFx access token
+        - `url` SignalFx SmartAgent URL
 
  `./config/production.js`, `./config/staging.js`, `./config/test.js` will use same configuration variables as `./config/default.js` except `./config/test.js` will have new configurations for test only:
 - `MOCK_API_PORT` The mock server port for submission && challenge api
 
+## Setup APM
+
+### Datadog setup
+
+1. Signup to datadog and get a 14 day free trial if you haven't already from https://www.datadoghq.com/.
+
+2. Install the agent for your OS: https://docs.datadoghq.com/agent/?tab=agentv6
+
+3. Enable trace collection for the Datadog Agent (https://docs.datadoghq.com/agent/apm/?tab=agent630#agent-configuration.) by 
+    
+    1. Enabling `apm_config` in `datadog.yaml`
+
+      ```
+      # Trace Agent Specific Settings
+          apm_config:
+            enabled: true
+      ```
+
+    2. Enable listening to non local, docker traffic
+
+      ```
+      #  Only enable if Traces are being sent to this Agent from another host/container
+        apm_non_local_traffic: true
+      ```
+
+You can find the location of `datadog.yml` on your OS, here: https://docs.datadoghq.com/agent/guide/agent-configuration-files/?tab=agentv6.
+
+4. If you're on a mac, you need to install and run the Trace Agent in addition to the Datadog Agent: https://github.com/DataDog/datadog-agent/tree/master/docs/trace-agent#run-on-macos. Download the `amd64` file `trace-agent-6.10.0-darwin-amd64`.
+
+  Then, run,
+
+  `./trace-agent-6.10.0-darwin-amd64 -config ~/.datadog-agent/datadog.yaml`
+
+5. Start / Restart the datadog-agent: `datadog-agent start`
+   See https://docs.datadoghq.com/agent/guide/agent-commands/?tab=agentv6 for agent commands list
+
+If you're stuck, you can find the official docs here, https://docs.datadoghq.com/agent/apm/?tab=agent630. See Section `Setup process`.
+
+### LightStep setup
+
+The credentials provided in the forum are not enough to sign in and view the dashboard. You will need to,
+
+1. Signup for the 30 day trial `Lightstep tracing` plan from here: https://lightstep.com/products/
+
+2. On the dashboard, click on Settings to view your `component name` (name) and `access token`. Use these values for the `access_token` and `component_name` configuration option in `config/default.js` -> `tracing.lightStep`
+
+### SignalFX setup
+
+You can follow the documentation from here https://docs.signalfx.com/en/latest/apm/apm-quick-start/apm-quick-start.html
+
+The main steps are,
+
+1. Signup for a free trial of SignalFX from https://www.signalfx.com/ 
+
+2. Login to your account and click Integrations
+
+3. Setup SignalFx SmartAgent.
+
+4. Setup SignalFx Gateway.
+
+5. Find your token from `Settings` -> `Organization Settings` -> `Access tokens`
+
+6. Update the `accessToken` with the value from above in `config/default.js` -> `tracing.signalFX`
+
+Basically, legacy-sub-processor sends traces to SmartAgent on port 9080. SmartAgent forwards those traces to Gateway on port 8080. Gateway forwards traces to TraceURL.
+
 ## Validation
-Follow the steps in [Validation.md](Validation.md)
+
+Most of the default values of the configuration settings can be used as is. You will however need to update the following config settings in `config/default.js`,
+
+`AUTH0_CLIENT_ID` 
+
+`AUTH0_CLIENT_SECRET`
+
+`tracing.dataDog.hostname` (If needed. See description in `Configuration` section above)
+
+`tracing.lightStep.access_token`
+
+`signalFX.accessToken`
+
+Once done, follow the steps in [Validation.md](Validation.md) to deploy and test the application.

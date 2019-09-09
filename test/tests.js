@@ -12,9 +12,9 @@ const should = require('should')
 const _ = require('lodash')
 
 const logger = require('legacy-processor-module/common/logger')
-const {getKafkaOptions} = require('legacy-processor-module/KafkaConsumer')
-const {patchSubmission} = require('legacy-processor-module/LegacySubmissionIdService')
-const {sleep, expectTable, clearSubmissions} = require('legacy-processor-module/test/TestHelper')
+const { getKafkaOptions } = require('legacy-processor-module/KafkaConsumer')
+const { patchSubmission } = require('legacy-processor-module/LegacySubmissionIdService')
+const { sleep, expectTable, clearSubmissions } = require('legacy-processor-module/test/TestHelper')
 
 const {
   sampleSubmission,
@@ -28,7 +28,7 @@ const {
 // Default timeout
 const timeout = 1000
 const header = {
-  topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+  topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
   originator: config.KAFKA_NEW_SUBMISSION_ORIGINATOR,
   timestamp: '2018-02-16T00:00:00',
   'mime-type': 'application/json'
@@ -124,7 +124,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     // consume not processed messages before test
     const groupConsumer = new Kafka.GroupConsumer(options)
     await groupConsumer.init([{
-      subscriptions: [config.KAFKA_NEW_SUBMISSION_TOPIC, config.KAFKA_UPDATE_SUBMISSION_TOPIC],
+      subscriptions: [config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, config.KAFKA_AGGREGATE_SUBMISSION_TOPIC],
       handler: (messageSet, topic, partition) =>
         Promise.each(messageSet, (m) =>
           groupConsumer.commitOffset({ topic, partition, offset: m.offset }))
@@ -160,7 +160,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('Should setup healthcheck with check on kafka connection', async () => {
     const healthcheckEndpoint = `http://localhost:${process.env.PORT || 3000}/health`
-    let result = await Axios.get(healthcheckEndpoint)
+    const result = await Axios.get(healthcheckEndpoint)
     should.equal(result.status, 200)
     should.deepEqual(result.data, { checksRun: 1 })
   })
@@ -173,7 +173,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should skip message with null value', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: null } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: null } }
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -183,7 +183,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should skip message with null string value', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: 'null' } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: 'null' } }
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -193,7 +193,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should skip message with empty value', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: '' } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: '' } }
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -203,7 +203,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should skip message with non-well-formed JSON string value', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: 'abc' } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: 'abc' } }
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -214,7 +214,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with wrong topic value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           topic: 'wrong-topic'
@@ -226,12 +226,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
     logMessages.length.should.be.greaterThanOrEqual(2)
     should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
-    should.equal(logMessages[1], `Skipped the message topic "wrong-topic" doesn't match the Kafka topic ${config.KAFKA_NEW_SUBMISSION_TOPIC}.`)
+    should.equal(logMessages[1], `Skipped the message topic "wrong-topic" doesn't match the Kafka topic ${config.KAFKA_AGGREGATE_SUBMISSION_TOPIC}.`)
   })
 
   it('should skip message with invalid timestamp and payload value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           timestamp: 'invalid date',
@@ -256,7 +256,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with wrong originator value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           originator: 'wrong-originator'
@@ -273,7 +273,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with wrong resource value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -292,7 +292,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with null id value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -311,7 +311,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with zero id value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -330,7 +330,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with null challengeId value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -349,7 +349,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with zero challengeId value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -368,7 +368,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with null memberId value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -387,7 +387,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with zero memberId value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -406,7 +406,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with null url value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -425,7 +425,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with invalid url value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -444,7 +444,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with null type value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -463,7 +463,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with empty type value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -482,7 +482,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with null submissionPhaseId value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -501,7 +501,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should skip message with zero submissionPhaseId value', async () => {
     const m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -519,20 +519,20 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should skip new submission(not found subTrack) message', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMessage, { payload: { challengeId: 60005521 } })) } }
-    let results = await producer.send(m)
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMessage, { payload: { challengeId: 60005521 } })) } }
+    const results = await producer.send(m)
     await waitJob()
-    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
     logMessages.length.should.be.greaterThanOrEqual(2)
     should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('Skipped event for subTrack: ')))
   })
 
   it('should skip new submission of MM challenge message', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMessage, { payload: { challengeId: 30054163 } })) } }
-    let results = await producer.send(m)
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(_.merge({}, sampleMessage, { payload: { challengeId: 30054163 } })) } }
+    const results = await producer.send(m)
     await waitJob()
-    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
     logMessages.length.should.be.greaterThanOrEqual(2)
     should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith('Skipped event for subTrack: DEVELOP_MARATHON_MATCH')))
@@ -541,7 +541,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   it('should handle new submission message successfully', async () => {
     await clearSubmissions()
 
-    let m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
+    let m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -559,7 +559,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
     // Send another one with extra keys
     m = {
-      topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
         value: JSON.stringify(_.merge({}, sampleMessage, {
           payload: {
@@ -584,7 +584,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   it('should handle final fix message successfully', async () => {
     await clearSubmissions()
 
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleFinalFixMessage) } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleFinalFixMessage) } }
     const results = await producer.send(m)
     await waitJob()
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -605,10 +605,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   it('should handle new studio submission message successfully', async () => {
     await clearSubmissions()
 
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleStudioMessage) } }
-    let results = await producer.send(m)
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleStudioMessage) } }
+    const results = await producer.send(m)
     await waitJob()
-    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
     logMessages.length.should.be.greaterThanOrEqual(2)
     should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.startsWith(`Successfully processed non MM message - Patched to the Submission API: id ${sampleStudioMessage.payload.id}`)))
@@ -623,7 +623,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should handle new submission message which not allow multiple submissions successfully', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleNotAllowMultipleMessage) } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleNotAllowMultipleMessage) } }
     let results = await producer.send(m)
     await waitJob()
     let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
@@ -652,10 +652,10 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
   })
 
   it('should log error for new submission without challenge properties', async () => {
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleNoChallengePropertiesMessage) } }
-    let results = await producer.send(m)
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleNoChallengePropertiesMessage) } }
+    const results = await producer.send(m)
     await waitJob()
-    let messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
+    const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
     logMessages.length.should.be.greaterThanOrEqual(2)
     should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
     should.ok(logMessages.find(x => x.includes('Error: null or empty result get challenge properties')))
@@ -663,36 +663,37 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should log error if the submission-api is unreachable', async () => {
     await closeServer(mockApi)
-    const m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
+    const m = { topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } }
     const results = await producer.send(m)
     await waitJob()
     await startServer(mockApi, config.MOCK_API_PORT)
     const messageInfo = `Topic: ${results[0].topic}; Partition: ${results[0].partition}; Offset: ${results[0].offset}; Message: ${m.message.value}.`
     logMessages.length.should.be.greaterThanOrEqual(2)
     should.equal(logMessages[0], `Handle Kafka event message; ${messageInfo}`)
-    should.ok(logMessages.find(x => x.startsWith('{ Error: connect ECONNREFUSED') || x.startsWith('{ Error: getaddrinfo ENOTFOUND')))
+    should.ok(logMessages.find(x => x.startsWith('Error: connect ECONNREFUSED') || x.startsWith('Error: getaddrinfo ENOTFOUND')))
   })
 
   it('should handle update submission message successfully', async () => {
     await clearSubmissions()
-
-    await producer.send({ topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } })
+    const updateMessage = JSON.parse(JSON.stringify(sampleMessage))
+    delete updateMessage.payload.originalTopic
+    await producer.send({ topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } })
     await waitJob()
 
-    await patchSubmission(sampleMessage.payload.id, {legacySubmissionId: null})
+    await patchSubmission(sampleMessage.payload.id, { legacySubmissionId: null })
 
     await expectTable('upload', 1, {
-      project_id: sampleMessage.payload.challengeId,
-      project_phase_id: sampleMessage.payload.submissionPhaseId,
-      url: sampleMessage.payload.url
+      project_id: updateMessage.payload.challengeId,
+      project_phase_id: updateMessage.payload.submissionPhaseId,
+      url: updateMessage.payload.url
     })
 
     const updatedUrl = 'http://content.topcoder.com/some/path/updated'
     const m = {
-      topic: config.KAFKA_UPDATE_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
-        value: JSON.stringify(_.merge({}, sampleMessage, {
-          topic: config.KAFKA_UPDATE_SUBMISSION_TOPIC,
+        value: JSON.stringify(_.merge({}, updateMessage, {
+          topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
           payload: {
             url: updatedUrl
           }
@@ -710,30 +711,31 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     should.ok(logMessages.find(x => x.startsWith('Successfully processed non MM message - Submission url updated, legacy submission id : 0')))
 
     await expectTable('upload', 1, {
-      project_id: sampleMessage.payload.challengeId,
-      project_phase_id: sampleMessage.payload.submissionPhaseId,
+      project_id: updateMessage.payload.challengeId,
+      project_phase_id: updateMessage.payload.submissionPhaseId,
       url: updatedUrl
     })
   })
 
   it('should handle update submission message(newer with legacySubmissionId) successfully', async () => {
     await clearSubmissions()
-
-    await producer.send({ topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } })
+    const updateMessage = JSON.parse(JSON.stringify(sampleMessage))
+    delete updateMessage.payload.originalTopic
+    await producer.send({ topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMessage) } })
     await waitJob()
 
     await expectTable('upload', 1, {
-      project_id: sampleMessage.payload.challengeId,
-      project_phase_id: sampleMessage.payload.submissionPhaseId,
-      url: sampleMessage.payload.url
+      project_id: updateMessage.payload.challengeId,
+      project_phase_id: updateMessage.payload.submissionPhaseId,
+      url: updateMessage.payload.url
     })
 
     const updatedUrl = 'http://content.topcoder.com/some/path/legacyupdated'
     const m = {
-      topic: config.KAFKA_UPDATE_SUBMISSION_TOPIC,
+      topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
       message: {
-        value: JSON.stringify(_.merge({}, sampleMessage, {
-          topic: config.KAFKA_UPDATE_SUBMISSION_TOPIC,
+        value: JSON.stringify(_.merge({}, updateMessage, {
+          topic: config.KAFKA_AGGREGATE_SUBMISSION_TOPIC,
           payload: {
             url: updatedUrl
           }
@@ -751,8 +753,8 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     should.ok(logMessages.find(x => x.startsWith('Successfully processed non MM message - Submission url updated, legacy submission id')))
 
     await expectTable('upload', 1, {
-      project_id: sampleMessage.payload.challengeId,
-      project_phase_id: sampleMessage.payload.submissionPhaseId,
+      project_id: updateMessage.payload.challengeId,
+      project_phase_id: updateMessage.payload.submissionPhaseId,
       url: updatedUrl
     })
   })

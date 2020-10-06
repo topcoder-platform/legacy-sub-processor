@@ -1,4 +1,4 @@
-# Topcoder - Legacy Submission Processor Application
+# Topcoder - Legacy Submission Processor Application 
 ----------------------
 
 ## Requirements

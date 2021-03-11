@@ -14,42 +14,42 @@ echo "Creating lsp-asp images"
 echo "================================"
 docker-compose -f ecs-docker-compose.yml build --build-arg servername=${DB_SERVER_NAME} --build-arg port=${DB_SERVER_PORT} lsp-app
 #docker tag lsp-app:latest $TAG
-echo "================================"
-echo "lsp-asp images has created"
-echo "Creating kafka and tc-informix"
-echo "================================"
-docker-compose -f ecs-docker-compose.yml up -d kafka
-echo "================================"
-echo "kafka has created"
-echo "Creating kafka and tc-informix"
-echo "================================"
-docker-compose -f ecs-docker-compose.yml up -d tc-informix
-echo "================================"
-echo "tc-informix has created"
-echo "Executing kafka topics"
-echo "================================"
-sleep 5
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
-docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
-echo "================================"
-echo "kafka topics has created"
-echo "Copying sql file and setting env"
-echo "================================"
-docker cp test/sql/test.sql iif_innovator_c:/
-sleep 10
-echo "================================"
-echo "copied sql file "
-echo "setting env"
-echo "================================"
-docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
-echo "================================"
-echo "env set"
-echo "initiating test"
-echo "================================"
+#echo "================================"
+#echo "lsp-asp images has created"
+#echo "Creating kafka and tc-informix"
+#echo "================================"
+#docker-compose -f ecs-docker-compose.yml up -d kafka
+#echo "================================"
+#echo "kafka has created"
+#echo "Creating kafka and tc-informix"
+#echo "================================"
+#docker-compose -f ecs-docker-compose.yml up -d tc-informix
+#echo "================================"
+#echo "tc-informix has created"
+#echo "Executing kafka topics"
+#echo "================================"
+#sleep 5
+#docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
+#docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
+#echo "================================"
+#echo "kafka topics has created"
+#echo "Copying sql file and setting env"
+#echo "================================"
+#docker cp test/sql/test.sql iif_innovator_c:/
+#sleep 10
+#echo "================================"
+#echo "copied sql file "
+#echo "setting env"
+#echo "================================"
+#docker exec -ti iif_innovator_c bash -c "source /home/informix/ifx_informixoltp_tcp.env && dbaccess - /test.sql"
+#echo "================================"
+#echo "env set"
+#echo "initiating test"
+#echo "================================"
 #docker-compose -f ecs-docker-compose.yml up --build lsp-app-test
-echo "================================"
-echo "test completed"
-echo "================================"
+#echo "================================"
+#echo "test completed"
+#echo "================================"
 #docker build -f ECSDockerfile -t $TAG .
 
 # Copies "node_modules" from the created image, if necessary for caching.

@@ -90,7 +90,7 @@ workflows:
             branches:
               only:
                 - develop
-                - legacy_only
+                - feature/shapeup-pure-V5-task
 
       # Production builds are exectuted only on tagged commits to the
       # master branch.

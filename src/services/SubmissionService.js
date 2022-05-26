@@ -43,7 +43,7 @@ async function handle(event) {
     return;
   }
 
-  if (event.payload.resource !== 'submission') {
+  if (event.payload.resource !== 'submission' || event.payload.resource !== 'reviewSummation') {
     logger.debug(`Skipped event from resource ${event.payload.resource}`);
     return;
   }
@@ -72,32 +72,65 @@ async function handle(event) {
   }
 
   if (event.payload.originalTopic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
-    // Handle new submission
-    logger.debug(`Started adding submission for ${event.payload.id}`);
-    try {
-      const timestamp = Date.parse(event.payload.created);
-      const patchObject = await LegacySubmissionIdService.addSubmission(
-        event.payload.id,
-        event.payload.challengeId,
-        event.payload.memberId,
-        event.payload.submissionPhaseId,
-        event.payload.url,
-        event.payload.type,
-        timestamp,
-        false
-      );
+    if (event.payload.resource === 'submission') {
+      // Handle new submission
+      logger.debug(`Started adding submission for ${event.payload.id}`);
+      try {
+        const timestamp = Date.parse(event.payload.created);
+        const patchObject = await LegacySubmissionIdService.addSubmission(
+          event.payload.id,
+          event.payload.challengeId,
+          event.payload.memberId,
+          event.payload.submissionPhaseId,
+          event.payload.url,
+          event.payload.type,
+          timestamp,
+          false
+        );
 
-      logger.debug(
-        `Successfully processed non MM message - Patched to the Submission API: id ${
-          event.payload.id
-        }, patch: ${JSON.stringify(patchObject)}`
-      );
-    } catch (error) {
-      logger.error(
-        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
-      );
-      logger.error(error);
-      throw error;
+        logger.debug(
+          `Successfully processed non MM message - Patched to the Submission API: id ${
+            event.payload.id
+          }, patch: ${JSON.stringify(patchObject)}`
+        );
+      } catch (error) {
+        logger.error(
+          `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+        );
+        logger.error(error);
+        throw error;
+      }
+    } else if (event.payload.resource === 'reviewSummation') {
+      const submissionId = event.payload.submissionId;
+
+      logger.debug(`Started adding provisional score for ${submissionId}`);
+      const submission = await LegacySubmissionIdService.getSubmission(submissionId);
+      if (submission == null) {
+        logger.debug(`Failed to get submission ${submissionId}`);
+        return;
+      }
+      if (event.payload.metadata == null || event.payload.metadata.testType != 'provisional') {
+        logger.debug(`Submission does not have a provisional score ${submissionId}`)
+        return;
+      }
+
+      try {
+        await LegacySubmissionIdService.updateProvisionalScore(
+          submission.legacyChallengeId,
+          submission.memberId,
+          submission.submissionPhaseId,
+          submissionId,
+          submission.type,
+          event.payload.aggregateScore
+        )
+        logger.debug(`Successfully updated provisional score for ${submissionId}`)
+      } catch (err) {
+        logger.error(
+          `Failed to handle ${JSON.stringify(event)}: ${err.message}`
+        );
+        logger.error(err);
+        throw err;
+      }
     }
   } else if (event.payload.url) {
     // We only concerns updating url,

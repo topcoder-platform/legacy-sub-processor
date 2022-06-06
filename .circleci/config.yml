@@ -50,7 +50,7 @@ jobs:
     environment:
       DEPLOY_ENV: "DEV"
       LOGICAL_ENV: "dev"
-      APPNAME: "lsp-app"
+      APPNAME: "legacyapp"
     steps: *builddeploy_steps
   
   # Build & Deploy against production backend
@@ -59,7 +59,7 @@ jobs:
     environment:
       DEPLOY_ENV: "PROD"
       LOGICAL_ENV: "dev"
-      APPNAME: "lsp-app"
+      APPNAME: "legacyapp"
     steps: *builddeploy_steps
           
 workflows:

@@ -43,7 +43,7 @@ async function handle(event) {
     return;
   }
 
-  if (event.payload.resource !== 'submission' || event.payload.resource !== 'reviewSummation') {
+  if (event.payload.resource !== 'submission' || event.payload.resource !== 'review') {
     logger.debug(`Skipped event from resource ${event.payload.resource}`);
     return;
   }
@@ -100,7 +100,7 @@ async function handle(event) {
         logger.error(error);
         throw error;
       }
-    } else if (event.payload.resource === 'reviewSummation') {
+    } else if (event.payload.resource === 'review') {
       const submissionId = event.payload.submissionId;
 
       logger.debug(`Started adding provisional score for ${submissionId}`);

@@ -43,7 +43,7 @@ async function handle(event) {
     return;
   }
 
-  if (event.payload.resource !== 'submission' || event.payload.resource !== 'review') {
+  if (event.payload.resource !== 'submission' && event.payload.resource !== 'review') {
     logger.debug(`Skipped event from resource ${event.payload.resource}`);
     return;
   }

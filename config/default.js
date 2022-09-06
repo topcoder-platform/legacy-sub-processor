@@ -21,6 +21,8 @@ module.exports = {
 
   KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC || 'common.error.reporting',
 
+  KAFKA_DELETE_SUBMISSION_TOPIC: process.env.KAFKA_DELETE_SUBMISSION_TOPIC || 'submission.notification.delete',
+
   KAFKA_AGGREGATE_SUBMISSION_TOPIC: process.env.KAFKA_AGGREGATE_SUBMISSION_TOPIC || 'submission.notification.aggregate',
 
   // The topic from which the app consumes events

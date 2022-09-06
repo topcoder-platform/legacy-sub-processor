@@ -3,10 +3,44 @@
  */
 const config = require('config');
 const Joi = require('joi');
-
+const _ = require('lodash')
 const logger = require('legacy-processor-module/common/logger');
 const Schema = require('legacy-processor-module/Schema');
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService');
+
+const deleteEventSchema = Schema.createEventSchema({
+  id: Joi.sid().required(),
+  resource: Joi.resource()
+});
+
+
+/**
+ * Handles delete submission event
+ * @param event
+ * @return {Promise<void>}
+ */
+async function handleSubmissionDelete(event) {
+  // Validate event
+  if (!Schema.validateEvent(event, deleteEventSchema)) {
+    return;
+  }
+
+  if (_.get(event, 'payload.resource') !== 'submission') {
+    logger.debug(`Skipped event from resource ${event.payload.resource}`);
+    return;
+  }
+
+  try {
+    await LegacySubmissionIdService.deleteSubmission(event.payload.id);
+    logger.debug(`Successfully processed delete event with submissionId: ${event.payload.id}`)
+  } catch (error) {
+    logger.error(
+      `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+    );
+    logger.error(error);
+    throw error;
+  }
+}
 
 // The event schema to validate events from Kafka
 const eventSchema = Schema.createEventSchema({
@@ -23,13 +57,17 @@ const eventSchema = Schema.createEventSchema({
 });
 
 /**
- * Handle new submission and update submission event.
+ * Handle new submission, update submission event and delete submission event.
  * @param {Object} event the event object
  */
 async function handle(event) {
   if (!event) {
     logger.debug('Skipped null or empty event');
     return;
+  }
+
+  if (event.topic === config.KAFKA_DELETE_SUBMISSION_TOPIC) {
+    return handleSubmissionDelete(event)
   }
 
   // Check topic and originator

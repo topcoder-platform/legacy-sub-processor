@@ -10,7 +10,8 @@ const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmiss
 
 const deleteEventSchema = Schema.createEventSchema({
   id: Joi.sid().required(),
-  resource: Joi.resource()
+  resource: Joi.resource(),
+  legacyId: Joi.number().integer().required()
 });
 
 
@@ -31,8 +32,8 @@ async function handleSubmissionDelete(event) {
   }
 
   try {
-    await LegacySubmissionIdService.deleteSubmission(event.payload.id);
-    logger.debug(`Successfully processed delete event with submissionId: ${event.payload.id}`)
+    await LegacySubmissionIdService.deleteSubmission(event.payload.legacyId);
+    logger.debug(`Successfully processed delete event with submissionId: ${event.payload.id} and legacySubmissionId: ${event.payload.legacyId}`)
   } catch (error) {
     logger.error(
       `Failed to handle ${JSON.stringify(event)}: ${error.message}`

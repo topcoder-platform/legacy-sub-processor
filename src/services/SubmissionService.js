@@ -22,6 +22,7 @@ const deleteEventSchema = Schema.createEventSchema({
  */
 async function handleSubmissionDelete(event) {
   // Validate event
+  logger.debug(`handleSubmissionDelete validating event ${JSON.stringify(event)}`)
   if (!Schema.validateEvent(event, deleteEventSchema)) {
     return;
   }
@@ -67,10 +68,6 @@ async function handle(event) {
     return;
   }
 
-  if (event.topic === config.KAFKA_DELETE_SUBMISSION_TOPIC) {
-    return handleSubmissionDelete(event)
-  }
-
   // Check topic and originator
   if (event.topic !== config.KAFKA_AGGREGATE_SUBMISSION_TOPIC) {
     logger.debug(`Skipped event from topic ${event.topic}`);
@@ -85,6 +82,10 @@ async function handle(event) {
   if (event.payload.resource !== 'submission') {
     logger.debug(`Skipped event from resource ${event.payload.resource}`);
     return;
+  }
+
+  if (event.payload.originalTopic === config.KAFKA_DELETE_SUBMISSION_TOPIC) {
+    return handleSubmissionDelete(event)
   }
 
   // Validate event

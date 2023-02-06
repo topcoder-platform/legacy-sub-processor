@@ -84,6 +84,14 @@ workflows:
                 - develop
                 - feature/shapeup-pure-V5-task
 
+      # Development builds are executed on "develop" branch only.
+      - "build-qa":
+          context : org-global      
+          filters:
+            branches:
+              only:
+                - qa
+
       # Production builds are exectuted only on tagged commits to the
       # master branch.
       - "build-prod":

@@ -54,6 +54,15 @@ jobs:
       LOGICAL_ENV: "dev"
       APPNAME: "legacyapp"
     steps: *builddeploy_steps
+
+  # Build & Deploy against development backend
+  "build-qa":
+    <<: *defaults
+    environment:
+      DEPLOY_ENV: "QA"
+      LOGICAL_ENV: "qa"
+      APPNAME: "legacyapp"
+    steps: *builddeploy_steps    
   
   # Build & Deploy against production backend
   "build-prod":
@@ -76,6 +85,14 @@ workflows:
               only:
                 - develop
                 - feature/shapeup-pure-V5-task
+
+      # Development builds are executed on "develop" branch only.
+      - "build-qa":
+          context : org-global      
+          filters:
+            branches:
+              only:
+                - qa
 
       # Production builds are exectuted only on tagged commits to the
       # master branch.

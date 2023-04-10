@@ -7,7 +7,7 @@ RUN mkdir /app
 WORKDIR /home/informix
 
 RUN sed -i '/jessie-updates/d' /etc/apt/sources.list
-RUN apt-get -qq update && apt-get -qq install -y \
+RUN apt-get -qq update --force-yes && apt-get -qq install -y --force-yes \
     wget gcc g++ make xz-utils python2.7 git
 
 RUN wget -q -O node8.tar.xz https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-x64.tar.xz \

@@ -92,6 +92,7 @@ workflows:
               only:
                 - develop
                 - feature/shapeup-pure-V5-task
+                - PROD-2902
 
       # Production builds are exectuted only on tagged commits to the
       # master branch.

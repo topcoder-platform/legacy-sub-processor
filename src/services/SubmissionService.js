@@ -172,6 +172,35 @@ async function handle(event) {
         throw err;
       }
     }
+  } else if (event.payload.originalTopic === config.KAFKA_UPDATE_SUBMISSION_TOPIC && event.payload.resource === 'submission' && !event.payload.legacySubmissionId) {
+    // Legacy submission ID is not yet created, perhaps due to an informix outage/error
+    // we will try to create it here
+    logger.debug(`Started adding submission for ${event.payload.id}`);
+    try {
+      const timestamp = Date.parse(event.payload.created);
+      const patchObject = await LegacySubmissionIdService.addSubmission(
+        event.payload.id,
+        event.payload.challengeId,
+        event.payload.memberId,
+        event.payload.submissionPhaseId,
+        event.payload.url,
+        event.payload.type,
+        timestamp,
+        false
+      );
+
+      logger.debug(
+        `Successfully processed non MM message - Patched to the Submission API: id ${
+          event.payload.id
+        }, patch: ${JSON.stringify(patchObject)}`
+      );
+    } catch (error) {
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
+      logger.error(error);
+      throw error;
+    }
   } else if (event.payload.url) {
     // We only concerns updating url,
     // while the update event may not be caused by url update

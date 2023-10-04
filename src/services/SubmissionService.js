@@ -116,7 +116,7 @@ async function handle(event) {
       // Handle new submission
       logger.debug(`Started adding submission for ${event.payload.id}`);
       try {
-        const timestamp = Date.parse(event.payload.created);
+        const timestamp = Date.parse(event.payload.created || event.payload.submittedDate);
         const patchObject = await LegacySubmissionIdService.addSubmission(
           event.payload.id,
           event.payload.challengeId,
@@ -177,7 +177,7 @@ async function handle(event) {
     // we will try to create it here
     logger.debug(`Started adding submission for ${event.payload.id}`);
     try {
-      const timestamp = Date.parse(event.payload.created);
+      const timestamp = Date.parse(event.payload.created || event.payload.submittedDate);
       const patchObject = await LegacySubmissionIdService.addSubmission(
         event.payload.id,
         event.payload.challengeId,

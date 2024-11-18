@@ -14,10 +14,10 @@ module.exports = {
   KAFKA_URL: process.env.KAFKA_URL || 'ssl://kafka-host:9093',
 
   // The client cert, can be (1) the path to the cert file, or (2) the cert content
-  KAFKA_CLIENT_CERT: process.env.KAFKA_CLIENT_CERT
+  KAFKA_CLIENT_CERT: process.env.KAFKA_CLIENT_CERT,
 
   // The client cert key, can be (1) the path to the cert key file, or (2) the cert key content
-  KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY
+  KAFKA_CLIENT_CERT_KEY: process.env.KAFKA_CLIENT_CERT_KEY,
 
   KAFKA_ERROR_TOPIC: process.env.KAFKA_ERROR_TOPIC || 'common.error.reporting',
 

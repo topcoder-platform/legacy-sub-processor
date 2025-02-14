@@ -50,7 +50,7 @@ jobs:
             source awsenvconf
             ./buildenv.sh -e DEV -b dev-legacyapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e DEV -t latest -s dev-global-appvar,dev-legacyapp-appvar -i lsp-app
+            ./master_deploy.sh -d ECS -e DEV -t latest -s dev-global-appvar,dev-legacyapp-appvar -i lsp-app -p FARGATE
             
   # Build & Deploy against production backend
   "build-prod":

@@ -77,7 +77,7 @@ jobs:
             source awsenvconf
             ./buildenv.sh -e PROD -b prod-legacyapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e PROD -t latest -s prod-global-appvar,prod-legacyapp-appvar -i lsp-app
+            ./master_deploy.sh -d ECS -e PROD -t latest -s prod-global-appvar,prod-legacyapp-appvar -i lsp-app -p FARGATE
             
 workflows:
   version: 2
